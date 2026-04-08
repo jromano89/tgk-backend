@@ -131,7 +131,8 @@
     instanceConfig: ic || null,
     terminology: ic?.terminology || null,
     kpis: ic?.kpis || null,
-    agreements: ic?.agreements || null
+    agreements: ic?.agreements || null,
+    defaultIamProducts: ic?.defaultIamProducts || null
   };
 
   window.TGK_ACCESS = createAccess(mode);

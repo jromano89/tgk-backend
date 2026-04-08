@@ -68,6 +68,7 @@ const WEALTH_CONFIG = {
     { key: 'web-forms', label: 'Web Forms', icon: 'web-forms' },
     { key: 'workspaces', label: 'Workspaces', icon: 'workspaces' }
   ],
+  defaultIamProducts: ['id-verification', 'web-forms', 'doc-gen'],
   maestro: {
     publisherName: 'TGK Wealth',
     publisherEmail: 'demo@tgkwealth.com',
@@ -143,6 +144,7 @@ const HEALTHCARE_CONFIG = {
     { key: 'web-forms', label: 'Web Forms', icon: 'web-forms' },
     { key: 'workspaces', label: 'Workspaces', icon: 'workspaces' }
   ],
+  defaultIamProducts: ['web-forms', 'id-verification', 'doc-gen'],
   maestro: {
     publisherName: 'MedFlow Health',
     publisherEmail: 'demo@medflowhealth.com',

@@ -1,39 +1,6 @@
 (function () {
-  const VERTICALS = [
-    { key: 'wealth', title: 'Wealth Management', desc: 'Advisors & investors' },
-    { key: 'healthcare', title: 'Healthcare', desc: 'Providers & patients' },
-    { key: 'insurance', title: 'Insurance', desc: 'Carriers & agents' },
-  ];
-
-  const VERTICAL_DEFAULTS = {
-    wealth: {
-      advisorRole: 'Advisor', advisorRolePlural: 'Advisors',
-      clientRole: 'Investor', clientRolePlural: 'Investors',
-      advisorPortalLabel: 'Advisor Portal', clientPortalLabel: 'Investor Portal',
-      clientBookLabel: 'Investor Book',
-      onboardingAction: 'Open Account', onboardingWorkflowLabel: 'Account Opening',
-      maintenanceAction: 'Transfer Assets', maintenanceWorkflowLabel: 'Asset Transfer'
-    },
-    healthcare: {
-      advisorRole: 'Care Coordinator', advisorRolePlural: 'Care Coordinators',
-      clientRole: 'Patient', clientRolePlural: 'Patients',
-      advisorPortalLabel: 'Coordinator Portal', clientPortalLabel: 'Patient Portal',
-      clientBookLabel: 'Patient Roster',
-      onboardingAction: 'New Patient Intake', onboardingWorkflowLabel: 'Patient Intake',
-      maintenanceAction: 'Request Records Transfer', maintenanceWorkflowLabel: 'Records Transfer'
-    },
-    insurance: {
-      advisorRole: 'Agent', advisorRolePlural: 'Agents',
-      clientRole: 'Policyholder', clientRolePlural: 'Policyholders',
-      advisorPortalLabel: 'Agent Portal', clientPortalLabel: 'Policyholder Portal',
-      clientBookLabel: 'Policy Book',
-      onboardingAction: 'New Policy', onboardingWorkflowLabel: 'Policy Issuance',
-      maintenanceAction: 'File Claim', maintenanceWorkflowLabel: 'Claims Processing'
-    }
-  };
-
   const STEPS = [
-    { id: 'vertical', title: 'Vertical', desc: 'Choose your industry vertical.' },
+    { id: 'vertical', title: 'Storyline', desc: 'Choose an industry vertical and demo storyline.' },
     { id: 'identity', title: 'Identity', desc: 'Name and brand your portal instance.' },
     { id: 'terminology', title: 'Terminology', desc: 'Customize role labels and actions.' },
     { id: 'review', title: 'Review & Create', desc: 'Review your configuration and create.' }
@@ -56,6 +23,12 @@
     return div.innerHTML;
   }
 
+  async function fetchPresets() {
+    const res = await fetch(`${resolveBackendUrl()}/api/instances/presets`);
+    if (!res.ok) throw new Error('Failed to load presets');
+    return res.json();
+  }
+
   function bootWizard() {
     const stepsContainer = document.getElementById('wizard-steps');
     const contentContainer = document.getElementById('wizard-content');
@@ -67,13 +40,25 @@
     let currentStep = 0;
     let creating = false;
     let created = false;
+    let verticals = [];
+    let presets = [];
 
     const formData = {
-      vertical: 'wealth',
+      vertical: null,
+      presetKey: null,
       companyName: '',
       brandColor: '#3b5bdb',
-      terminology: { ...VERTICAL_DEFAULTS.wealth }
+      terminology: {}
     };
+
+    // Load presets then render
+    fetchPresets().then(data => {
+      verticals = data.verticals;
+      presets = data.presets;
+      renderStep();
+    }).catch(() => {
+      contentContainer.innerHTML = '<p class="wizard-error">Failed to load storyline presets. Is the backend running?</p>';
+    });
 
     function renderStepDots() {
       stepsContainer.innerHTML = STEPS.map((step, i) => {
@@ -95,6 +80,10 @@
       });
     }
 
+    function getPresetsForVertical(verticalKey) {
+      return presets.filter(p => p.vertical === verticalKey);
+    }
+
     function renderStep() {
       readFormInputs();
 
@@ -102,12 +91,41 @@
       let html = `<h2 class="wizard-section-title">${step.title}</h2><p class="wizard-section-desc">${step.desc}</p>`;
 
       if (step.id === 'vertical') {
+        // Vertical cards (top row)
         html += '<div class="wizard-vertical-grid">';
-        VERTICALS.forEach(v => {
+        verticals.forEach(v => {
           const sel = formData.vertical === v.key ? ' wizard-vertical-card--selected' : '';
-          html += `<div class="wizard-vertical-card${sel}" data-vertical="${v.key}"><div class="wizard-vertical-card__title">${v.title}</div><div class="wizard-vertical-card__desc">${v.desc}</div></div>`;
+          const count = getPresetsForVertical(v.key).length;
+          html += `<div class="wizard-vertical-card${sel}" data-vertical="${v.key}">
+            <div class="wizard-vertical-card__title">${v.title}</div>
+            <div class="wizard-vertical-card__desc">${v.desc}</div>
+            <div class="wizard-vertical-card__count">${count} storyline${count !== 1 ? 's' : ''}</div>
+          </div>`;
         });
         html += '</div>';
+
+        // Storyline cards (below, for selected vertical)
+        if (formData.vertical) {
+          const vPresets = getPresetsForVertical(formData.vertical);
+          if (vPresets.length) {
+            html += '<div class="wizard-storyline-list">';
+            vPresets.forEach(p => {
+              const sel = formData.presetKey === p.key ? ' wizard-storyline-card--selected' : '';
+              const badges = (p.highlightedProducts || []).map(k =>
+                `<span class="wizard-product-badge">${escapeHtml(k)}</span>`
+              ).join('');
+              html += `<div class="wizard-storyline-card${sel}" data-preset="${p.key}">
+                <div class="wizard-storyline-card__header">
+                  <span class="wizard-storyline-card__color" style="background:${p.brandColor}"></span>
+                  <span class="wizard-storyline-card__title">${escapeHtml(p.title)}</span>
+                </div>
+                <div class="wizard-storyline-card__desc">${escapeHtml(p.description)}</div>
+                <div class="wizard-storyline-card__badges">${badges}</div>
+              </div>`;
+            });
+            html += '</div>';
+          }
+        }
       }
 
       if (step.id === 'identity') {
@@ -141,21 +159,23 @@
           ['maintenanceAction', 'Maintenance Action Label', t.maintenanceAction]
         ];
         fields.forEach(([key, label, val]) => {
-          html += `<div class="wizard-field"><label class="wizard-label">${label}</label><input class="wizard-input" data-field="t.${key}" value="${escapeHtml(val)}"></div>`;
+          html += `<div class="wizard-field"><label class="wizard-label">${label}</label><input class="wizard-input" data-field="t.${key}" value="${escapeHtml(val || '')}"></div>`;
         });
       }
 
       if (step.id === 'review') {
         const slug = slugify(formData.companyName || 'my-portal');
+        const selectedPreset = presets.find(p => p.key === formData.presetKey);
         html += `<ul class="wizard-summary-list">
           <li><span class="wizard-summary-key">Slug</span><span class="wizard-summary-val">${escapeHtml(slug)}</span></li>
           <li><span class="wizard-summary-key">Name</span><span class="wizard-summary-val">${escapeHtml(formData.companyName || slug)}</span></li>
-          <li><span class="wizard-summary-key">Vertical</span><span class="wizard-summary-val">${escapeHtml(formData.vertical)}</span></li>
+          <li><span class="wizard-summary-key">Storyline</span><span class="wizard-summary-val">${escapeHtml(selectedPreset ? selectedPreset.title : 'Custom')}</span></li>
+          <li><span class="wizard-summary-key">Vertical</span><span class="wizard-summary-val">${escapeHtml(formData.vertical || 'none')}</span></li>
           <li><span class="wizard-summary-key">Brand Color</span><span class="wizard-summary-val"><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:${formData.brandColor};vertical-align:middle;margin-right:4px;"></span>${formData.brandColor}</span></li>
-          <li><span class="wizard-summary-key">Advisor Role</span><span class="wizard-summary-val">${escapeHtml(formData.terminology.advisorRole)}</span></li>
-          <li><span class="wizard-summary-key">Client Role</span><span class="wizard-summary-val">${escapeHtml(formData.terminology.clientRole)}</span></li>
-          <li><span class="wizard-summary-key">Onboarding</span><span class="wizard-summary-val">${escapeHtml(formData.terminology.onboardingAction)}</span></li>
-          <li><span class="wizard-summary-key">Maintenance</span><span class="wizard-summary-val">${escapeHtml(formData.terminology.maintenanceAction)}</span></li>
+          <li><span class="wizard-summary-key">Advisor Role</span><span class="wizard-summary-val">${escapeHtml(formData.terminology.advisorRole || '')}</span></li>
+          <li><span class="wizard-summary-key">Client Role</span><span class="wizard-summary-val">${escapeHtml(formData.terminology.clientRole || '')}</span></li>
+          <li><span class="wizard-summary-key">Onboarding</span><span class="wizard-summary-val">${escapeHtml(formData.terminology.onboardingAction || '')}</span></li>
+          <li><span class="wizard-summary-key">Maintenance</span><span class="wizard-summary-val">${escapeHtml(formData.terminology.maintenanceAction || '')}</span></li>
         </ul>
         <div id="wizard-error" class="wizard-error" style="display:none;"></div>`;
       }
@@ -166,7 +186,28 @@
       contentContainer.querySelectorAll('[data-vertical]').forEach(card => {
         card.addEventListener('click', () => {
           formData.vertical = card.dataset.vertical;
-          formData.terminology = { ...VERTICAL_DEFAULTS[formData.vertical] || VERTICAL_DEFAULTS.wealth };
+          formData.presetKey = null;
+          formData.terminology = {};
+          renderStep();
+        });
+      });
+
+      // Bind storyline card clicks
+      contentContainer.querySelectorAll('[data-preset]').forEach(card => {
+        card.addEventListener('click', () => {
+          const preset = presets.find(p => p.key === card.dataset.preset);
+          if (preset) {
+            formData.presetKey = preset.key;
+            formData.vertical = preset.vertical;
+            formData.brandColor = preset.brandColor;
+            if (!formData.companyName || formData.companyName === formData._lastPresetName) {
+              formData.companyName = preset.portalName;
+            }
+            formData._lastPresetName = preset.portalName;
+            if (preset.terminology) {
+              formData.terminology = { ...preset.terminology };
+            }
+          }
           renderStep();
         });
       });
@@ -201,7 +242,7 @@
         nextBtn.disabled = creating;
       } else {
         nextBtn.textContent = 'Next';
-        nextBtn.disabled = false;
+        nextBtn.disabled = (currentStep === 0 && !formData.presetKey);
       }
     }
 
@@ -209,41 +250,57 @@
       readFormInputs();
       const slug = slugify(formData.companyName || 'my-portal');
       const name = formData.companyName || slug;
-      const t = formData.terminology;
-
-      const config = {
-        metadata: { name, vertical: formData.vertical, description: `${name} portal instance` },
-        branding: { color: formData.brandColor, logo: null },
-        terminology: {
-          portalName: name,
-          ...t
-        },
-        docusign: { userId: '', accountId: '', scopes: 'signature impersonation aow_manage organization_read webforms_manage webforms_read webforms_instance_read webforms_instance_write adm_store_unified_repo_read', baseUrl: 'https://api-d.docusign.com' },
-        workflows: { onboardingId: '', maintenanceId: '' },
-        kpis: { advisor: [], client: [] },
-        agreements: { taxonomy: [], summaryMetrics: { totalCount: 0, completionRate: 0 }, turnaroundHours: 0, volumeSeries: [] },
-        advisorId: '',
-        defaultMode: 'advanced',
-        iamProducts: [
-          { key: 'doc-gen', label: 'Doc Gen', icon: 'doc-gen' },
-          { key: 'id-verification', label: 'ID Verification', icon: 'id-verification' },
-          { key: 'monitor', label: 'Monitor', icon: 'monitor' },
-          { key: 'notary', label: 'Notary', icon: 'notary' },
-          { key: 'web-forms', label: 'Web Forms', icon: 'web-forms' },
-          { key: 'workspaces', label: 'Workspaces', icon: 'workspaces' }
-        ],
-        maestro: { publisherName: name, publisherEmail: '', publisherPhone: '' }
-      };
 
       creating = true;
       updateNav();
 
       try {
-        const response = await fetch(`${resolveBackendUrl()}/api/instances`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ slug, config })
-        });
+        let response;
+
+        if (formData.presetKey) {
+          // Create from preset
+          response = await fetch(`${resolveBackendUrl()}/api/instances/from-preset`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              slug,
+              presetKey: formData.presetKey,
+              overrides: {
+                companyName: name,
+                brandColor: formData.brandColor,
+                terminology: formData.terminology
+              }
+            })
+          });
+        } else {
+          // Fallback: create with raw config (shouldn't happen with new flow)
+          const t = formData.terminology;
+          const config = {
+            metadata: { name, vertical: formData.vertical || 'wealth', description: `${name} portal instance` },
+            branding: { color: formData.brandColor, logo: null },
+            terminology: { portalName: name, ...t },
+            docusign: { userId: '', accountId: '', scopes: 'signature impersonation aow_manage organization_read webforms_manage webforms_read webforms_instance_read webforms_instance_write adm_store_unified_repo_read', baseUrl: 'https://api-d.docusign.com' },
+            workflows: { onboardingId: '', maintenanceId: '' },
+            kpis: { advisor: [], client: [] },
+            agreements: { taxonomy: [], summaryMetrics: { totalCount: 0, completionRate: 0 }, turnaroundHours: 0, volumeSeries: [] },
+            advisorId: '',
+            defaultMode: 'advanced',
+            iamProducts: [
+              { key: 'doc-gen', label: 'Doc Gen', icon: 'doc-gen' },
+              { key: 'id-verification', label: 'ID Verification', icon: 'id-verification' },
+              { key: 'monitor', label: 'Monitor', icon: 'monitor' },
+              { key: 'notary', label: 'Notary', icon: 'notary' },
+              { key: 'web-forms', label: 'Web Forms', icon: 'web-forms' },
+              { key: 'workspaces', label: 'Workspaces', icon: 'workspaces' }
+            ],
+            maestro: { publisherName: name, publisherEmail: '', publisherPhone: '' }
+          };
+          response = await fetch(`${resolveBackendUrl()}/api/instances`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ slug, config })
+          });
+        }
 
         if (!response.ok) {
           const err = await response.json().catch(() => ({ error: response.statusText }));
@@ -292,7 +349,10 @@
       }
     });
 
-    renderStep();
+    // Show loading state
+    contentContainer.innerHTML = '<p style="color:#94a3b8;text-align:center;">Loading storylines...</p>';
+    renderStepDots();
+    updateNav();
   }
 
   if (document.readyState === 'loading') {

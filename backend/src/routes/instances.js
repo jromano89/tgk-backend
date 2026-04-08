@@ -1,6 +1,7 @@
 const express = require('express');
 const { getDb } = require('../database');
 const { DEFAULT_INSTANCES } = require('../instance-configs');
+const { VERTICALS, STORYLINE_PRESETS, PRESETS_BY_KEY, buildConfigFromPreset } = require('../storyline-presets');
 const { createError, normalizeSlug, route } = require('../utils');
 
 const router = express.Router();
@@ -26,6 +27,42 @@ router.get('/', route((req, res) => {
   ensureSeeded(db);
   const rows = db.prepare('SELECT * FROM instances ORDER BY created_at').all();
   res.json(rows.map(parseRow));
+}));
+
+// GET /api/instances/presets — verticals + preset summaries for wizard
+router.get('/presets', route((req, res) => {
+  const presets = STORYLINE_PRESETS.map(p => ({
+    key: p.key,
+    vertical: p.vertical,
+    title: p.title,
+    description: p.description,
+    highlightedProducts: p.highlightedProducts,
+    brandColor: p.brandColor,
+    portalName: p.portalName,
+    terminology: p.terminology
+  }));
+  res.json({ verticals: VERTICALS, presets });
+}));
+
+// POST /api/instances/from-preset — create instance from a preset
+router.post('/from-preset', route((req, res) => {
+  const db = getDb();
+  ensureSeeded(db);
+  const { slug: rawSlug, presetKey, overrides } = req.body || {};
+  const slug = normalizeSlug(rawSlug);
+  if (!slug) throw createError(400, 'Missing or invalid slug.');
+  if (!presetKey) throw createError(400, 'Missing presetKey.');
+
+  const preset = PRESETS_BY_KEY[presetKey];
+  if (!preset) throw createError(400, `Unknown preset "${presetKey}".`);
+
+  const existing = db.prepare('SELECT slug FROM instances WHERE slug = ?').get(slug);
+  if (existing) throw createError(409, `Instance "${slug}" already exists.`);
+
+  const config = buildConfigFromPreset(preset, overrides || {});
+  db.prepare('INSERT INTO instances (slug, config) VALUES (?, ?)').run(slug, JSON.stringify(config));
+  const row = db.prepare('SELECT * FROM instances WHERE slug = ?').get(slug);
+  res.status(201).json(parseRow(row));
 }));
 
 // GET /api/instances/:slug — get one instance
