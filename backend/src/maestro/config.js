@@ -12,6 +12,16 @@ const config = {
   publisherPhone: process.env.MAESTRO_PUBLISHER_PHONE || process.env.MAESTRO_EXTENSION_PUBLISHER_PHONE || '800-555-0100'
 };
 
+function resolvePublisherConfig(instanceConfig) {
+  const maestro = instanceConfig?.maestro || {};
+  return {
+    publisherName: maestro.publisherName || config.publisherName,
+    publisherEmail: maestro.publisherEmail || config.publisherEmail,
+    publisherPhone: maestro.publisherPhone || config.publisherPhone
+  };
+}
+
 module.exports = {
-  config
+  config,
+  resolvePublisherConfig
 };

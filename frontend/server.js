@@ -16,6 +16,9 @@ const CONTENT_TYPES = {
   '.txt': 'text/plain; charset=utf-8'
 };
 
+// Instance path prefix pattern: /i/:slug/...
+const INSTANCE_PREFIX_RE = /^\/i\/([^/]+)(\/.*)?$/;
+
 function safeJoin(rootDir, requestPath) {
   const normalized = path.posix.normalize(`/${requestPath}`);
   const absolutePath = path.join(rootDir, normalized);
@@ -71,15 +74,8 @@ function sendNotFound(res) {
   res.end('Not found');
 }
 
-const server = http.createServer((req, res) => {
-  if (!['GET', 'HEAD'].includes(req.method || 'GET')) {
-    res.writeHead(405, { 'Content-Type': 'text/plain; charset=utf-8' });
-    res.end('Method not allowed');
-    return;
-  }
-
-  const requestUrl = new URL(req.url || '/', 'http://localhost');
-  const candidates = findCandidatePaths(requestUrl.pathname);
+function resolveFile(requestPath) {
+  const candidates = findCandidatePaths(requestPath);
 
   for (const candidate of candidates) {
     const resolvedPath = safeJoin(ROOT_DIR, candidate);
@@ -92,17 +88,43 @@ const server = http.createServer((req, res) => {
       continue;
     }
 
-    if (req.method === 'HEAD') {
-      res.writeHead(200, getHeaders(resolvedPath));
-      res.end();
-      return;
-    }
+    return resolvedPath;
+  }
 
-    sendFile(res, resolvedPath);
+  return null;
+}
+
+const server = http.createServer((req, res) => {
+  if (!['GET', 'HEAD'].includes(req.method || 'GET')) {
+    res.writeHead(405, { 'Content-Type': 'text/plain; charset=utf-8' });
+    res.end('Method not allowed');
     return;
   }
 
-  sendNotFound(res);
+  const requestUrl = new URL(req.url || '/', 'http://localhost');
+  let pathname = requestUrl.pathname;
+
+  // Rewrite /i/:slug/* paths — strip the instance prefix and serve
+  // the underlying static file. The slug is consumed client-side by config.js.
+  const instanceMatch = pathname.match(INSTANCE_PREFIX_RE);
+  if (instanceMatch) {
+    const rest = instanceMatch[2] || '/';
+    pathname = rest;
+  }
+
+  const resolvedPath = resolveFile(pathname);
+  if (!resolvedPath) {
+    sendNotFound(res);
+    return;
+  }
+
+  if (req.method === 'HEAD') {
+    res.writeHead(200, getHeaders(resolvedPath));
+    res.end();
+    return;
+  }
+
+  sendFile(res, resolvedPath);
 });
 
 server.listen(PORT, HOST, () => {

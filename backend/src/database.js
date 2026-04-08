@@ -5,6 +5,16 @@ const Database = require('better-sqlite3');
 const DEFAULT_DB_PATH = path.resolve(__dirname, '..', 'data', 'demo.db');
 
 const TABLE_DEFINITIONS = {
+  instances: {
+    createSql: `
+      CREATE TABLE IF NOT EXISTS instances (
+        slug TEXT PRIMARY KEY,
+        config TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `
+  },
   employees: {
     createSql: `
       CREATE TABLE IF NOT EXISTS employees (

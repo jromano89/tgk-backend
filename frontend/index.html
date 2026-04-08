@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TGK Wealth Portal Launcher</title>
-  <meta name="description" content="Financial services demo launcher for Advisor and Investor IAM workflows.">
+  <title>TGK Portal Platform</title>
+  <meta name="description" content="Docusign IAM portal generation platform — launch and manage demo portal instances.">
   <meta name="theme-color" content="#18003d">
   <link rel="icon" href="shared/favicon.ico" sizes="any">
   <link rel="stylesheet" href="shared/styles/tgk.css?v=20260430-1">
-  <script defer src="config.js?v=20260409-1"></script>
+  <script defer src="config.js?v=20260430-1"></script>
   <script defer src="shared/js/tgk-launcher.js?v=20260430-2"></script>
 </head>
 <body class="tgk-launcher-body">
@@ -21,70 +21,70 @@
           </div>
 
           <div class="hero-copy-block">
-            <div class="hero-kicker">TGK Wealth</div>
-            <h1>Docusign IAM for Financial Services</h1>
-            <p>
-              Explore two production-style workflows powered by Docusign IAM.
+            <div class="hero-kicker">TGK Portal Platform</div>
+            <h1>
+              <span class="hero-accent-iam">IAM</span> Story Demo Experience
+            </h1>
+            <p id="hero-copy">
+              Select a portal instance and workflow to launch.
             </p>
           </div>
         </div>
       </section>
 
-      <section class="mode-panel" aria-label="Experience mode">
-        <label class="mode-toggle" for="global-advanced-toggle">
-          <span class="mode-chip">Normal</span>
-          <input id="global-advanced-toggle" type="checkbox" role="switch" aria-label="Enable advanced mode">
-          <span class="toggle-track" aria-hidden="true">
-            <span class="toggle-thumb"></span>
-          </span>
-          <span class="mode-chip">Advanced</span>
-        </label>
-      </section>
-
-      <section class="launcher-panel" aria-label="Portal selection">
-        <a id="advisor-tile-link" class="portal-tile" href="advisor/?mode=advanced" aria-labelledby="advisor-title advisor-focus">
-          <div class="portal-head">
-            <div class="portal-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="7.5" r="3" stroke="currentColor" stroke-width="1.6"/>
-                <path d="M5.5 18c1.2-2.8 3.2-4.2 6.5-4.2s5.3 1.4 6.5 4.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                <path d="M16.2 8.4h2.3M17.3 7.2v2.3" stroke="#ff5252" stroke-width="1.5" stroke-linecap="round"/>
-              </svg>
-            </div>
-            <h2 id="advisor-title">Advisor Portal</h2>
+      <section class="configurator">
+        <section class="configurator-section" data-group="instance">
+          <p class="section-label">Select Portal Instance</p>
+          <div id="instance-grid" class="option-grid" data-columns="3">
+            <div class="launcher-loading">Loading instances...</div>
           </div>
-          <p id="advisor-focus" class="portal-focus">New account opening workflow</p>
-          <span class="tile-cta">
-            Enter Portal
-            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
-              <path d="M5 10h10M11 6l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </span>
-        </a>
+        </section>
 
-        <a id="investor-tile-link" class="portal-tile" href="investor/?mode=advanced" aria-labelledby="investor-title investor-focus">
-          <div class="portal-head">
-            <div class="portal-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none">
-                <path d="M5 16.5h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                <path d="M7.5 14v-3.2M12 14V7.2M16.5 14v-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                <path d="m7.5 10.8 3.5-2.6 2.8 1.8 2.7-3.7" stroke="#ff5252" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </div>
-            <h2 id="investor-title">Investor Portal</h2>
+        <section class="configurator-section" data-group="workflow">
+          <p class="section-label">Select Core Workflow</p>
+          <div class="option-grid" data-columns="2">
+            <button class="option-card is-selected" type="button" data-option="workflow" data-value="onboarding" aria-pressed="true">
+              <span class="card-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="8" r="3.2" stroke="currentColor" stroke-width="1.6"/>
+                  <path d="M6.5 18c1.3-3.1 3.4-4.6 5.5-4.6s4.2 1.5 5.5 4.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                </svg>
+              </span>
+              <span class="card-copy">
+                <span class="card-title" id="onboarding-label">Onboarding</span>
+                <span class="card-subtitle" id="onboarding-subtitle">New account opening, KYC, forms</span>
+              </span>
+            </button>
+
+            <button class="option-card" type="button" data-option="workflow" data-value="maintenance">
+              <span class="card-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="m9.1 7.4 7.5 7.5M7.3 16.7l3.4-3.4M13.1 10.9l3.4-3.4M4.8 19.2l2.1-2.1M17 6.7l2.2-2.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                  <path d="M13.7 6.5 17.5 10.3" stroke="#FF5252" stroke-width="1.6" stroke-linecap="round"/>
+                </svg>
+              </span>
+              <span class="card-copy">
+                <span class="card-title" id="maintenance-label">Maintenance</span>
+                <span class="card-subtitle" id="maintenance-subtitle">Address changes, beneficiaries, transfers</span>
+              </span>
+            </button>
           </div>
-          <p id="investor-focus" class="portal-focus">Account maintenance transactions</p>
-          <span class="tile-cta">
-            Enter Portal
-            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
-              <path d="M5 10h10M11 6l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </span>
-        </a>
-      </section>
+        </section>
 
-      <section class="footer-meta">
-        <div class="footer-note"><a id="backend-service-link" href="#">Shared backend service</a></div>
+        <section class="launch-panel">
+          <a id="generate-demo-link" class="launch-cta" href="advisor/">
+            <span id="generate-demo-label">Launch Portal -&gt;</span>
+          </a>
+
+          <div class="footer-meta">
+            <div class="footer-note">Multi-instance portal platform • Config-driven per vertical</div>
+            <div class="footer-links">
+              <a id="configurable-portal-link" href="advisor/?mode=advanced">SC configurable portal</a>
+              <span class="footer-sep">•</span>
+              <a href="wizard/">Create new instance</a>
+            </div>
+          </div>
+        </section>
       </section>
     </div>
   </main>

@@ -1,0 +1,229 @@
+.hero--compact { padding-bottom: 1.5rem; }
+.hero--compact h1 { font-size: 1.6rem; }
+
+.wizard-shell {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 1.5rem 3rem;
+}
+
+.wizard-steps {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  justify-content: center;
+}
+
+.wizard-step-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  transition: background 0.2s;
+}
+
+.wizard-step-dot--active {
+  background: #ff5252;
+}
+
+.wizard-step-dot--done {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.wizard-content {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.wizard-section-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  margin: 0 0 0.25rem;
+}
+
+.wizard-section-desc {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  margin: 0 0 1.5rem;
+}
+
+.wizard-field {
+  margin-bottom: 1.25rem;
+}
+
+.wizard-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #cbd5e1;
+  margin-bottom: 0.35rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.wizard-input,
+.wizard-select {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.92rem;
+  color: #f1f5f9;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.15s;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.wizard-input:focus,
+.wizard-select:focus {
+  border-color: rgba(255, 82, 82, 0.5);
+}
+
+.wizard-input::placeholder {
+  color: #64748b;
+}
+
+.wizard-color-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.wizard-color-swatch {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  overflow: hidden;
+  position: relative;
+}
+
+.wizard-color-swatch input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+
+.wizard-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.launch-cta--secondary {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.launch-cta--secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.wizard-nav button[disabled] {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.wizard-vertical-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.wizard-vertical-card {
+  padding: 1rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.wizard-vertical-card:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.wizard-vertical-card--selected {
+  border-color: #ff5252;
+  background: rgba(255, 82, 82, 0.08);
+}
+
+.wizard-vertical-card__title {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.wizard-vertical-card__desc {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-top: 0.15rem;
+}
+
+.wizard-summary-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.wizard-summary-list li {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 0.88rem;
+}
+
+.wizard-summary-list li:last-child {
+  border-bottom: none;
+}
+
+.wizard-summary-key {
+  color: #94a3b8;
+}
+
+.wizard-summary-val {
+  color: #f1f5f9;
+  font-weight: 500;
+}
+
+.wizard-success {
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.wizard-success__icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.wizard-success__title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  margin-bottom: 0.5rem;
+}
+
+.wizard-success__copy {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+.wizard-error {
+  color: #ff5252;
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+}

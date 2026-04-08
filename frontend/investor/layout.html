@@ -9,7 +9,7 @@
       <div class="tgk-portal-brand__mark" x-text="brandingInitial"></div>
       <div x-show="!sidebarCollapsed" class="tgk-portal-brand__copy">
         <div class="tgk-portal-brand__title" x-text="brandingAppName"></div>
-        <div class="tgk-portal-brand__meta">Investor Portal</div>
+        <div class="tgk-portal-brand__meta" x-text="t.clientPortalLabel"></div>
       </div>
     </div>
 
@@ -54,7 +54,7 @@
     <div x-show="canSeeSettings()" class="tgk-portal-switch-wrap">
       <a :href="'../advisor/index.html' + window.location.search" class="tgk-portal-switch" :class="{ 'tgk-portal-switch--collapsed': sidebarCollapsed }">
         <svg class="tgk-portal-nav__icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
-        <span x-show="!sidebarCollapsed">Switch to Advisor View</span>
+        <span x-show="!sidebarCollapsed" x-text="t.switchToAdvisorLabel"></span>
       </a>
     </div>
 
@@ -63,7 +63,7 @@
       <div class="tgk-portal-user__avatar" :style="`background:${avatarColor(selectedClient?.id || clientName)}`" x-text="initials(clientName)"></div>
       <div x-show="!sidebarCollapsed" class="tgk-portal-user__copy">
         <div class="tgk-portal-user__title" x-text="clientName"></div>
-        <div class="tgk-portal-user__meta">Investor</div>
+        <div class="tgk-portal-user__meta" x-text="t.clientRole"></div>
       </div>
     </div>
   </aside>
@@ -84,7 +84,7 @@
                 type="button"
                 class="tgk-investor-switch__button"
                 aria-label="Switch investor">
-                <span x-text="clientName || 'Investor'"></span>
+                <span x-text="clientName || t.clientRole"></span>
                 <svg
                   class="tgk-investor-switch__chevron"
                   :class="{ 'tgk-investor-switch__chevron--open': open }"
@@ -151,8 +151,8 @@
         <div class="tgk-empty-panel__icon">
           <svg class="tgk-icon tgk-icon--lg tgk-icon--muted" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/></svg>
         </div>
-        <h2 class="tgk-empty-panel__title">No investor selected</h2>
-        <p class="tgk-empty-panel__copy">Create an investor from the advisor portal or Maestro to populate this view.</p>
+        <h2 class="tgk-empty-panel__title" x-text="'No ' + t.clientRole.toLowerCase() + ' selected'"></h2>
+        <p class="tgk-empty-panel__copy" x-text="'Create a record from the ' + t.advisorPortalLabel.toLowerCase() + ' or Maestro to populate this view.'"></p>
       </div>
 
       <!-- OVERVIEW TAB -->
@@ -207,12 +207,12 @@
         </div>
 
         <div class="tgk-surface-panel tgk-surface-panel--md tgk-advisor-card">
-          <h3 class="tgk-advisor-card__eyebrow">Your Advisor</h3>
+          <h3 class="tgk-advisor-card__eyebrow" x-text="'Your ' + t.advisorRole"></h3>
           <div class="tgk-advisor-card__body">
-            <div class="tgk-advisor-card__avatar" x-text="initials(assignedAdvisor?.name || 'Advisor')"></div>
+            <div class="tgk-advisor-card__avatar" x-text="initials(assignedAdvisor?.name || t.advisorRole)"></div>
             <div>
-              <div class="tgk-advisor-card__name" x-text="assignedAdvisor?.name || 'Your Advisor'"></div>
-              <div class="tgk-advisor-card__meta" x-text="assignedAdvisor?.title || 'Advisor'"></div>
+              <div class="tgk-advisor-card__name" x-text="assignedAdvisor?.name || ('Your ' + t.advisorRole)"></div>
+              <div class="tgk-advisor-card__meta" x-text="assignedAdvisor?.title || t.advisorRole"></div>
               <div class="tgk-advisor-card__meta" x-text="((assignedAdvisor?.email || '') + ' · ' + (assignedAdvisor?.phone || '')).replace(/^ · | · $/g, '')"></div>
             </div>
           </div>

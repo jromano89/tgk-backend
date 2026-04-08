@@ -90,6 +90,7 @@ a.alt:hover{background:rgba(255,255,255,.1)}
     }), null, 2));
   });
 
+  app.use('/api/instances', require('./routes/instances'));
   app.use('/api/auth', require('./routes/auth'));
   app.use('/api/data', require('./routes/resources'));
   app.use('/maestro', require('./routes/maestro'));

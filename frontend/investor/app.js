@@ -1,3 +1,7 @@
+function getInvestorTerminology(key, fallback) {
+  return window.TGK_CONFIG?.terminology?.[key] || fallback;
+}
+
 function investorApp() {
   const preferredAdvisorId = String(window.TGK_CONFIG?.advisorId || '').trim();
 
@@ -14,12 +18,28 @@ function investorApp() {
       stepsKey: 'taskWorkflowLoadingSteps',
       steps: [
         'Connecting to Docusign IAM',
-        'Preparing asset transfer',
+        'Preparing ' + getInvestorTerminology('maintenanceWorkflowLabel', 'asset transfer').toLowerCase(),
         'Launching the embedded experience'
       ]
     }),
     ...createTransactionModalHelpers(),
     tab: 'overview',
+
+    get t() {
+      const t = window.TGK_CONFIG?.terminology || {};
+      return {
+        portalName: t.portalName || 'TGK Wealth',
+        advisorRole: t.advisorRole || 'Advisor',
+        clientRole: t.clientRole || 'Investor',
+        clientRolePlural: t.clientRolePlural || 'Investors',
+        advisorPortalLabel: t.advisorPortalLabel || 'Advisor Portal',
+        clientPortalLabel: t.clientPortalLabel || 'Investor Portal',
+        maintenanceAction: t.maintenanceAction || 'Transfer Assets',
+        maintenanceWorkflowLabel: t.maintenanceWorkflowLabel || 'Asset Transfer',
+        switchToAdvisorLabel: 'Switch to ' + (t.advisorPortalLabel || 'Advisor Portal')
+      };
+    },
+
     advisors: [],
     assignedAdvisor: null,
     customers: [],

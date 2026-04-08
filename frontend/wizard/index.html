@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TGK Portal — Instance Generator</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" href="../shared/favicon.ico" sizes="any">
+  <link rel="stylesheet" href="../shared/styles/tgk-brand.css?v=20260408-1">
+  <link rel="stylesheet" href="../shared/styles/tgk-launcher.css?v=20260408-1">
+  <link rel="stylesheet" href="wizard.css?v=20260408-1">
+  <script defer src="../config.js"></script>
+  <script defer src="wizard.js?v=20260408-1"></script>
+</head>
+<body>
+  <main class="page-shell">
+    <div class="experience-frame">
+      <section class="hero hero--compact">
+        <div class="hero-inner">
+          <div class="brand-pill" aria-hidden="true">
+            <img class="brand-logo" src="../shared/docusign-logo-white.svg" alt="">
+          </div>
+          <div class="hero-copy-block">
+            <div class="hero-kicker">Instance Generator</div>
+            <h1>Create a New Portal</h1>
+            <p>Configure your portal instance in a few steps.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="wizard-shell" id="wizard-root">
+        <!-- Step indicators -->
+        <div class="wizard-steps" id="wizard-steps"></div>
+
+        <!-- Step content rendered by JS -->
+        <div class="wizard-content" id="wizard-content"></div>
+
+        <!-- Navigation -->
+        <div class="wizard-nav">
+          <button id="wizard-back" class="launch-cta launch-cta--secondary" type="button">Back</button>
+          <button id="wizard-next" class="launch-cta" type="button">Next</button>
+        </div>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

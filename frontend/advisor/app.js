@@ -1,36 +1,41 @@
 const MAESTRO_COMPLETION_SETTLE_DELAY_MS = 400;
 const MAESTRO_SUCCESS_REDIRECT_DELAY_MS = 2000;
 const CLIENT_DETAIL_REFRESH_MAX_MS = 20 * 60 * 1000;
-const AGREEMENT_SUMMARY_METRICS = Object.freeze({
-  totalCount: 128,
-  completionRate: 87
-});
-const AGREEMENT_TYPE_COLORS = {
-  'Account Opening': '#3567df',
-  Transfer: '#16a34a',
-  Maintenance: '#ea580c',
-  Other: '#64748b'
-};
-const AGREEMENT_TURNAROUND_HOURS = 7.1;
+
+const AGREEMENT_TYPE_PALETTE = ['#3567df', '#16a34a', '#ea580c', '#8b5cf6', '#0891b2', '#64748b'];
 
 function normalizeStatusValue(value) {
   return String(value || '').trim().toLowerCase();
 }
 
+function getTerminology(key, fallback) {
+  return window.TGK_CONFIG?.terminology?.[key] || fallback;
+}
+
+function getAgreementsConfig() {
+  return window.TGK_CONFIG?.agreements || {};
+}
+
+function getKpisConfig(role) {
+  return window.TGK_CONFIG?.kpis?.[role] || [];
+}
+
 function agreementTypeForName(name) {
+  const taxonomy = getAgreementsConfig().taxonomy;
+  if (Array.isArray(taxonomy) && taxonomy.length > 0) {
+    const normalized = String(name || '').trim().toLowerCase();
+    for (const entry of taxonomy) {
+      if (normalized.includes(entry.type) || normalized.includes(entry.label.toLowerCase())) {
+        return entry.label;
+      }
+    }
+    return taxonomy[taxonomy.length - 1]?.label || 'Other';
+  }
   const normalized = String(name || '').trim().toLowerCase();
-  if (!normalized) {
-    return 'Other';
-  }
-  if (normalized.includes('opening')) {
-    return 'Account Opening';
-  }
-  if (normalized.includes('transfer') || normalized.includes('acat')) {
-    return 'Transfer';
-  }
-  if (normalized.includes('beneficiary') || normalized.includes('maintenance') || normalized.includes('wire') || normalized.includes('update')) {
-    return 'Maintenance';
-  }
+  if (!normalized) return 'Other';
+  if (normalized.includes('opening')) return 'Account Opening';
+  if (normalized.includes('transfer') || normalized.includes('acat')) return 'Transfer';
+  if (normalized.includes('beneficiary') || normalized.includes('maintenance') || normalized.includes('wire') || normalized.includes('update')) return 'Maintenance';
   return 'Other';
 }
 
@@ -59,7 +64,7 @@ function advisorApp() {
       stepsKey: 'onboardingLoadingSteps',
       steps: [
         'Connecting to Docusign IAM',
-        'Preparing account opening',
+        'Preparing ' + getTerminology('onboardingWorkflowLabel', 'account opening').toLowerCase(),
         'Launching the embedded experience'
       ]
     }),
@@ -77,9 +82,9 @@ function advisorApp() {
     maestroCompleted: false,
     maestroNewContact: null,
     loading: true,
-    totalAgreementCount: AGREEMENT_SUMMARY_METRICS.totalCount,
-    agreementCompletionRateValue: AGREEMENT_SUMMARY_METRICS.completionRate,
-    agreementVolumeSeries: [5, 6, 4, 8, 9, 11, 8, 12, 14, 15, 16, 20],
+    totalAgreementCount: getAgreementsConfig().summaryMetrics?.totalCount ?? 128,
+    agreementCompletionRateValue: getAgreementsConfig().summaryMetrics?.completionRate ?? 87,
+    agreementVolumeSeries: getAgreementsConfig().volumeSeries || [5, 6, 4, 8, 9, 11, 8, 12, 14, 15, 16, 20],
     allAgreements: [],
     agreementSearchQuery: '',
     agreementsLoading: false,
@@ -105,6 +110,48 @@ function advisorApp() {
         console.error('Failed to load customers:', e);
       }
       this.loading = false;
+    },
+
+    // --- Terminology getters (config-driven) ---
+    get t() {
+      const t = window.TGK_CONFIG?.terminology || {};
+      return {
+        portalName: t.portalName || 'TGK Wealth',
+        advisorRole: t.advisorRole || 'Advisor',
+        clientRole: t.clientRole || 'Investor',
+        clientRolePlural: t.clientRolePlural || 'Investors',
+        advisorPortalLabel: t.advisorPortalLabel || 'Advisor Portal',
+        clientPortalLabel: t.clientPortalLabel || 'Investor Portal',
+        clientBookLabel: t.clientBookLabel || 'Investor Book',
+        onboardingAction: t.onboardingAction || 'Open Account',
+        onboardingWorkflowLabel: t.onboardingWorkflowLabel || 'Account Opening',
+        maintenanceWorkflowLabel: t.maintenanceWorkflowLabel || 'Asset Transfer',
+        switchToClientLabel: 'Switch to ' + (t.clientPortalLabel || 'Investor Portal')
+      };
+    },
+
+    get kpiDefinitions() {
+      return getKpisConfig('advisor');
+    },
+
+    computeKpi(kpiDef) {
+      if (kpiDef.static != null) return kpiDef.static;
+      if (kpiDef.aggregate === 'countWhere') {
+        return this.customers.filter(c => normalizeStatusValue(c.metadata?.status) === kpiDef.countWhereValue).length;
+      }
+      if (kpiDef.computeFrom === 'accounts.balance' || kpiDef.computeFrom === 'data.value') {
+        return this.customers.reduce((sum, c) => sum + (c.metadata?.value || 0), 0);
+      }
+      if (kpiDef.computeFrom === 'data.netWorth') {
+        return this.customers.reduce((sum, c) => sum + (c.metadata?.netWorth || 0), 0);
+      }
+      return 0;
+    },
+
+    formatKpi(kpiDef, value) {
+      if (kpiDef.format === 'currency') return fmtMoney(value);
+      if (kpiDef.format === 'percent') return fmtPct(value);
+      return String(value);
     },
 
     isCoreView(viewName = this.view) {
@@ -157,10 +204,10 @@ function advisorApp() {
         return map;
       }, new Map());
 
-      return Array.from(counts.entries()).map(([label, value]) => ({
+      return Array.from(counts.entries()).map(([label, value], index) => ({
         label,
         value,
-        color: AGREEMENT_TYPE_COLORS[label] || AGREEMENT_TYPE_COLORS.Other
+        color: AGREEMENT_TYPE_PALETTE[index % AGREEMENT_TYPE_PALETTE.length]
       }));
     },
 
@@ -169,7 +216,7 @@ function advisorApp() {
     },
 
     get agreementTurnaroundHours() {
-      return AGREEMENT_TURNAROUND_HOURS;
+      return getAgreementsConfig().turnaroundHours ?? 7.1;
     },
 
     get agreementTypeGradient() {
@@ -243,7 +290,7 @@ function advisorApp() {
       const customerId = agreement?.customer_id || agreement?.customerId;
       const matchedCustomer = this.customers.find((customer) => customer.id === customerId);
       return matchedCustomer?.name
-        || 'Unassigned investor';
+        || 'Unassigned ' + getTerminology('clientRole', 'investor').toLowerCase();
     },
 
     async viewClient(contact) {
@@ -501,7 +548,7 @@ function advisorApp() {
         }
 
         const result = await TGK_API.triggerMaestroWorkflow(workflowId, {
-          instance_name: `TGK Wealth Account Opening ${new Date().toISOString()}`,
+          instance_name: `${getTerminology('portalName', 'TGK Wealth')} ${getTerminology('onboardingWorkflowLabel', 'Account Opening')} ${new Date().toISOString()}`,
           trigger_inputs: {
             appSlug: window.TGK_CONFIG?.appSlug
           }

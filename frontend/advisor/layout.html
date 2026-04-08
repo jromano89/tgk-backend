@@ -10,7 +10,7 @@
       <div class="tgk-portal-brand__mark" x-text="brandingInitial"></div>
       <div x-show="!sidebarCollapsed" class="tgk-portal-brand__copy">
         <div class="tgk-portal-brand__title" x-text="brandingAppName"></div>
-        <div class="tgk-portal-brand__meta">Advisor Portal</div>
+        <div class="tgk-portal-brand__meta" x-text="t.advisorPortalLabel"></div>
       </div>
     </div>
 
@@ -54,16 +54,16 @@
     <div x-show="canSeeSettings()" class="tgk-portal-switch-wrap">
       <a :href="'../investor/index.html' + window.location.search" class="tgk-portal-switch" :class="{ 'tgk-portal-switch--collapsed': sidebarCollapsed }">
         <svg class="tgk-portal-nav__icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
-        <span x-show="!sidebarCollapsed">Switch to Investor View</span>
+        <span x-show="!sidebarCollapsed" x-text="t.switchToClientLabel"></span>
       </a>
     </div>
 
     <!-- User -->
     <div class="tgk-portal-user">
-      <div class="tgk-portal-user__avatar" style="background: var(--color-brand, #3b5bdb);" x-text="initials(currentUser?.name || 'Gordon Gecko')"></div>
+      <div class="tgk-portal-user__avatar" style="background: var(--color-brand, #3b5bdb);" x-text="initials(currentUser?.name || t.advisorRole)"></div>
       <div x-show="!sidebarCollapsed" class="tgk-portal-user__copy">
-        <div class="tgk-portal-user__title" x-text="currentUser?.name || 'Gordon Gecko'"></div>
-        <div class="tgk-portal-user__meta" x-text="currentUser?.title || 'Senior Advisor'"></div>
+        <div class="tgk-portal-user__title" x-text="currentUser?.name || t.advisorRole"></div>
+        <div class="tgk-portal-user__meta" x-text="currentUser?.title || t.advisorRole"></div>
       </div>
     </div>
   </aside>
@@ -75,54 +75,38 @@
     <div x-show="view === 'dashboard'" class="tgk-page-shell">
       <div class="tgk-page-stack">
         <div class="tgk-page-header">
-          <h1 class="tgk-page-title">Advisor Portal</h1>
+          <h1 class="tgk-page-title" x-text="t.advisorPortalLabel"></h1>
           <div class="tgk-page-header__actions">
             <label class="tgk-search-field">
               <svg class="tgk-search-field__icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-              <input x-model="searchQuery" type="text" placeholder="Search clients" class="tgk-form-input tgk-search-field__input">
+              <input x-model="searchQuery" type="text" :placeholder="'Search ' + t.clientRolePlural.toLowerCase()" class="tgk-form-input tgk-search-field__input">
             </label>
             <div x-data x-init="mountSharedTemplate($el, newsPanelTemplate())"></div>
-            <button @click="openOnboarding()" class="tgk-button tgk-button--primary">Open Account</button>
+            <button @click="openOnboarding()" @mouseenter="warmOnboarding()" @focus="warmOnboarding()" @touchstart.passive="warmOnboarding()" class="tgk-button tgk-button--primary" x-text="t.onboardingAction"></button>
           </div>
         </div>
 
         <div class="tgk-kpi-grid">
-          <section class="tgk-kpi tgk-tone-border--sky">
-            <div class="tgk-kpi__label">Total AUM</div>
-            <div class="tgk-kpi__value" x-text="fmtMoney(totalAum)"></div>
-            <div class="tgk-kpi__detail" x-text="customers.length + ' client relationships'"></div>
-          </section>
-
-          <section class="tgk-kpi tgk-tone-border--emerald">
-            <div class="tgk-kpi__label">Aggregate Net Worth</div>
-            <div class="tgk-kpi__value" x-text="fmtMoney(totalNetWorth)"></div>
-            <div class="tgk-kpi__detail">+2.9% this quarter</div>
-          </section>
-
-          <section class="tgk-kpi tgk-tone-border--amber">
-            <div class="tgk-kpi__label">Pending Reviews</div>
-            <div class="tgk-kpi__value" x-text="pendingReviews"></div>
-            <div class="tgk-kpi__detail">Annual &amp; suitability</div>
-          </section>
-
-          <section class="tgk-kpi tgk-tone-border--red">
-            <div class="tgk-kpi__label">Compliance Alerts</div>
-            <div class="tgk-kpi__value" x-text="complianceAlerts"></div>
-            <div class="tgk-kpi__detail">KYC refresh needed</div>
-          </section>
+          <template x-for="(kpi, kpiIdx) in kpiDefinitions" :key="kpi.key">
+            <section class="tgk-kpi" :class="['tgk-tone-border--sky','tgk-tone-border--emerald','tgk-tone-border--amber','tgk-tone-border--red'][kpiIdx % 4]">
+              <div class="tgk-kpi__label" x-text="kpi.label"></div>
+              <div class="tgk-kpi__value" x-text="formatKpi(kpi, computeKpi(kpi))"></div>
+              <div class="tgk-kpi__detail" x-text="kpi.trend || ''"></div>
+            </section>
+          </template>
         </div>
 
         <div class="tgk-surface-panel tgk-surface-panel--md">
           <div class="tgk-panel-heading tgk-panel-heading--spaced">
-            <h2 class="tgk-panel-title">Investor Book</h2>
+            <h2 class="tgk-panel-title" x-text="t.clientBookLabel"></h2>
           </div>
           <div class="tgk-data-table-shell">
             <table class="tgk-data-table">
               <thead>
                 <tr class="tgk-data-table__head-row">
-                  <th class="tgk-data-table__heading">Investor</th>
-                  <th class="tgk-data-table__heading">AUM</th>
-                  <th class="tgk-data-table__heading">Net Worth</th>
+                  <th class="tgk-data-table__heading" x-text="t.clientRole"></th>
+                  <th class="tgk-data-table__heading" x-text="kpiDefinitions[0]?.label || 'Value'"></th>
+                  <th class="tgk-data-table__heading" x-text="kpiDefinitions[1]?.label || 'Net Worth'"></th>
                   <th class="tgk-data-table__heading">Trend</th>
                   <th class="tgk-data-table__heading">Risk Profile</th>
                   <th class="tgk-data-table__heading">Status</th>
@@ -137,7 +121,7 @@
                         <div class="tgk-data-table__avatar" :style="`background:${avatarColor(c.id || c.name)}`" x-text="initials(c.name)"></div>
                         <div class="tgk-data-table__identity">
                           <div class="tgk-data-table__name" x-text="c.name"></div>
-                          <div class="tgk-data-table__meta" x-text="c.company || 'Investor'"></div>
+                          <div class="tgk-data-table__meta" x-text="c.company || t.clientRole"></div>
                         </div>
                       </div>
                     </td>
@@ -170,8 +154,8 @@
               <div class="tgk-empty-panel__icon">
                 <svg class="tgk-icon tgk-icon--lg tgk-icon--muted" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/></svg>
               </div>
-              <div class="tgk-empty-panel__title">No investors yet</div>
-              <p class="tgk-empty-panel__copy">Create an investor from Maestro or the API to start building the client book.</p>
+              <div class="tgk-empty-panel__title" x-text="'No ' + t.clientRolePlural.toLowerCase() + ' yet'"></div>
+              <p class="tgk-empty-panel__copy">Use Maestro or the API to add records to the book.</p>
             </div>
           </template>
         </div>
@@ -191,7 +175,7 @@
             <div class="tgk-surface-panel tgk-surface-panel--md tgk-profile-card">
               <div class="tgk-profile-card__avatar" :style="`background:${avatarColor(selectedContact.id || selectedContact.name)}`" x-text="initials(selectedContact.name)"></div>
               <h2 class="tgk-profile-card__name" x-text="selectedContact.name"></h2>
-              <div class="tgk-profile-card__meta" x-text="selectedContact.company || 'Investor'"></div>
+              <div class="tgk-profile-card__meta" x-text="selectedContact.company || t.clientRole"></div>
               <span class="tgk-status-badge" :class="statusClasses(selectedContact.metadata?.status)" x-text="selectedContact.metadata?.status || 'active'"></span>
               <div class="tgk-contact-list">
                 <div class="tgk-contact-row">
@@ -211,7 +195,7 @@
               </div>
             </div>
             <section class="tgk-kpi tgk-tone-border--sky">
-              <div class="tgk-kpi__label">Total AUM</div>
+              <div class="tgk-kpi__label" x-text="kpiDefinitions[0]?.label || 'Total AUM'"></div>
               <div class="tgk-kpi__value" x-text="fmtMoney(customerPortfolioValue(selectedContact))"></div>
               <div class="u-row u-gap-2" style="margin-top:8px;">
                 <svg width="80" height="24" viewBox="0 0 80 24">
@@ -315,8 +299,7 @@
         <div class="tgk-agreements-kpis">
           <section class="tgk-agreements-kpi-card">
             <div class="tgk-agreements-kpi-value" x-text="customers.length"></div>
-            <div class="tgk-agreements-kpi-label">Active Clients</div>
-            <div class="tgk-agreements-kpi-meta">+2 this week</div>
+            <div class="tgk-agreements-kpi-label" x-text="'Active ' + t.clientRolePlural"></div>
           </section>
 
           <section class="tgk-agreements-kpi-card">
@@ -328,13 +311,11 @@
           <section class="tgk-agreements-kpi-card">
             <div class="tgk-agreements-kpi-value"><span x-text="agreementCompletionRateValue"></span>%</div>
             <div class="tgk-agreements-kpi-label">Completion Rate</div>
-            <div class="tgk-agreements-kpi-meta">+8% vs last quarter</div>
           </section>
 
           <section class="tgk-agreements-kpi-card">
             <div class="tgk-agreements-kpi-value"><span x-text="agreementTurnaroundHours.toFixed(1)"></span>h</div>
             <div class="tgk-agreements-kpi-label">Turnaround Time</div>
-            <div class="tgk-agreements-kpi-meta">-72% vs manual</div>
           </section>
         </div>
 
@@ -475,8 +456,8 @@
               <div class="tgk-workflow-shell tgk-workflow-shell--top">
                 <div class="tgk-workflow-state">
                   <div class="tgk-pill tgk-pill--brand">Docusign IAM</div>
-                  <h3 class="tgk-workflow-title">Preparing account opening</h3>
-                  <p class="tgk-workflow-copy">Starting the embedded onboarding experience for a new investor. The form will collect the required investor details directly in Docusign.</p>
+                  <h3 class="tgk-workflow-title" x-text="'Preparing ' + t.onboardingWorkflowLabel.toLowerCase()"></h3>
+                  <p class="tgk-workflow-copy" x-text="'Starting the embedded onboarding experience for a new ' + t.clientRole.toLowerCase() + '. The form will collect the required details directly in Docusign.'"></p>
 
                   <div class="tgk-workflow-progress">
                     <div
@@ -499,7 +480,7 @@
             <template x-if="!maestroLoading && maestroError">
               <div class="tgk-workflow-shell">
                 <div class="tgk-workflow-state tgk-workflow-state--error">
-                  <h3 class="tgk-workflow-title">Unable to launch account opening</h3>
+                  <h3 class="tgk-workflow-title" x-text="'Unable to launch ' + t.onboardingWorkflowLabel.toLowerCase()"></h3>
                   <p class="tgk-workflow-copy" x-text="maestroError"></p>
                   <p class="tgk-workflow-copy">If this is a consent issue, reconnect Docusign so the app can request the <code>aow_manage</code> scope.</p>
                   <div class="tgk-workflow-actions">
@@ -529,7 +510,7 @@
                       <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                     </svg>
                   </div>
-                  <h3 class="tgk-workflow-title">Account opened successfully</h3>
+                  <h3 class="tgk-workflow-title" x-text="t.onboardingWorkflowLabel + ' completed successfully'"></h3>
                   <p class="tgk-workflow-copy">
                     <span x-text="maestroNewContact.name"></span>
                     has been added to your book. Redirecting now…
