@@ -42,6 +42,7 @@
     let created = false;
     let verticals = [];
     let presets = [];
+    let lastPresetName = '';
 
     const formData = {
       vertical: null,
@@ -200,10 +201,10 @@
             formData.presetKey = preset.key;
             formData.vertical = preset.vertical;
             formData.brandColor = preset.brandColor;
-            if (!formData.companyName || formData.companyName === formData._lastPresetName) {
+            if (!formData.companyName || formData.companyName === lastPresetName) {
               formData.companyName = preset.portalName;
             }
-            formData._lastPresetName = preset.portalName;
+            lastPresetName = preset.portalName;
             if (preset.terminology) {
               formData.terminology = { ...preset.terminology };
             }
@@ -257,50 +258,23 @@
       try {
         let response;
 
-        if (formData.presetKey) {
-          // Create from preset
-          response = await fetch(`${resolveBackendUrl()}/api/instances/from-preset`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              slug,
-              presetKey: formData.presetKey,
-              overrides: {
-                companyName: name,
-                brandColor: formData.brandColor,
-                terminology: formData.terminology
-              }
-            })
-          });
-        } else {
-          // Fallback: create with raw config (shouldn't happen with new flow)
-          const t = formData.terminology;
-          const config = {
-            metadata: { name, vertical: formData.vertical || 'wealth', description: `${name} portal instance` },
-            branding: { color: formData.brandColor, logo: null },
-            terminology: { portalName: name, ...t },
-            docusign: { userId: '', accountId: '', scopes: 'signature impersonation aow_manage organization_read webforms_manage webforms_read webforms_instance_read webforms_instance_write adm_store_unified_repo_read', baseUrl: 'https://api-d.docusign.com' },
-            workflows: { onboardingId: '', maintenanceId: '' },
-            kpis: { advisor: [], client: [] },
-            agreements: { taxonomy: [], summaryMetrics: { totalCount: 0, completionRate: 0 }, turnaroundHours: 0, volumeSeries: [] },
-            advisorId: '',
-            defaultMode: 'advanced',
-            iamProducts: [
-              { key: 'doc-gen', label: 'Doc Gen', icon: 'doc-gen' },
-              { key: 'id-verification', label: 'ID Verification', icon: 'id-verification' },
-              { key: 'monitor', label: 'Monitor', icon: 'monitor' },
-              { key: 'notary', label: 'Notary', icon: 'notary' },
-              { key: 'web-forms', label: 'Web Forms', icon: 'web-forms' },
-              { key: 'workspaces', label: 'Workspaces', icon: 'workspaces' }
-            ],
-            maestro: { publisherName: name, publisherEmail: '', publisherPhone: '' }
-          };
-          response = await fetch(`${resolveBackendUrl()}/api/instances`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ slug, config })
-          });
+        if (!formData.presetKey) {
+          throw new Error('No storyline selected. Go back and pick a storyline.');
         }
+
+        response = await fetch(`${resolveBackendUrl()}/api/instances/from-preset`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            slug,
+            presetKey: formData.presetKey,
+            overrides: {
+              companyName: name,
+              brandColor: formData.brandColor,
+              terminology: formData.terminology
+            }
+          })
+        });
 
         if (!response.ok) {
           const err = await response.json().catch(() => ({ error: response.statusText }));
