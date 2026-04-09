@@ -61,15 +61,17 @@
 
   function bootLauncher() {
     const heroCopy = document.getElementById('hero-copy');
-    const generateLink = document.getElementById('generate-demo-link');
-    const configurablePortalLink = document.getElementById('configurable-portal-link');
+    const primaryLink = document.getElementById('primary-portal-link');
+    const primaryLabel = document.getElementById('primary-portal-label');
+    const secondaryLink = document.getElementById('secondary-portal-link');
+    const secondaryLabel = document.getElementById('secondary-portal-label');
     const instanceGrid = document.getElementById('instance-grid');
     const onboardingLabel = document.getElementById('onboarding-label');
     const onboardingSubtitle = document.getElementById('onboarding-subtitle');
     const maintenanceLabel = document.getElementById('maintenance-label');
     const maintenanceSubtitle = document.getElementById('maintenance-subtitle');
 
-    if (!generateLink || !instanceGrid) return;
+    if (!primaryLink || !instanceGrid) return;
 
     const state = {
       instance: null,
@@ -83,7 +85,9 @@
     }
 
     function render() {
-      const routeBase = state.workflow === 'maintenance' ? 'investor/' : 'advisor/';
+      const isOnboarding = state.workflow === 'onboarding';
+      const primaryRoute = isOnboarding ? 'advisor/' : 'investor/';
+      const secondaryRoute = isOnboarding ? 'investor/' : 'advisor/';
       const instancePrefix = state.instance ? `/i/${state.instance}/` : '';
 
       // Update selection visuals
@@ -107,10 +111,17 @@
       if (maintenanceLabel) maintenanceLabel.textContent = t.maintenanceWorkflowLabel || 'Maintenance';
       if (maintenanceSubtitle) maintenanceSubtitle.textContent = t.maintenanceAction || 'Address changes, beneficiaries, transfers';
 
-      generateLink.href = `${instancePrefix}${routeBase}?mode=normal`;
-      if (configurablePortalLink) {
-        configurablePortalLink.href = `${instancePrefix}advisor/?mode=advanced`;
-      }
+      // Primary link follows workflow selection; secondary is the opposite portal
+      const advisorLabel = t.advisorPortalLabel || 'Advisor Portal';
+      const clientLabel = t.clientPortalLabel || 'Investor Portal';
+      const primaryPortalLabel = isOnboarding ? advisorLabel : clientLabel;
+      const secondaryPortalLabel = isOnboarding ? clientLabel : advisorLabel;
+
+      primaryLink.href = `${instancePrefix}${primaryRoute}?mode=advanced`;
+      if (primaryLabel) primaryLabel.textContent = `Launch ${primaryPortalLabel} \u2192`;
+
+      if (secondaryLink) secondaryLink.href = `${instancePrefix}${secondaryRoute}?mode=advanced`;
+      if (secondaryLabel) secondaryLabel.textContent = `Open ${secondaryPortalLabel} \u2192`;
     }
 
     function bindOptionClicks() {

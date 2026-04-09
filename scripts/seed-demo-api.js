@@ -1,3 +1,11 @@
+const {
+  SEED_DESCRIPTORS,
+  buildProfileFromDescriptor,
+  account,
+  envelope,
+  task
+} = require('../backend/src/storyline-presets');
+
 const BASE_URL = String(process.env.TGK_SEED_BASE_URL || 'http://localhost:3000').replace(/\/+$/, '');
 
 // Parse --instance=slug or --preset=key from CLI args
@@ -14,6 +22,7 @@ const DEFAULT_HEADERS = {
   'X-Demo-App': APP_SLUG
 };
 
+<<<<<<< HEAD
 function account(id, name, accountType, value, ytdReturn, allocations, extra = {}) {
   return {
     id,
@@ -552,6 +561,10 @@ for (const [key, desc] of Object.entries(SEED_DESCRIPTORS)) {
   PROFILES[key] = () => buildProfileFromDescriptor(desc);
 }
 
+// ---------------------------------------------------------------------------
+// Legacy profiles with stable UUIDs (used by pre-existing default instances)
+// ---------------------------------------------------------------------------
+
 function buildWealthProfile() {
   const employees = [
     {
@@ -796,7 +809,7 @@ function buildHealthcareProfile() {
 }
 
 // ---------------------------------------------------------------------------
-// Seed execution
+// Seed execution (HTTP-based, for CLI usage)
 // ---------------------------------------------------------------------------
 
 async function request(path, options = {}) {

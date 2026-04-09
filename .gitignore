@@ -4,3 +4,6 @@ node_modules/
 backend/.env
 .local/
 backend/data/*.db*
+extensions/maestro-tgk/.env
+context/
+docs/

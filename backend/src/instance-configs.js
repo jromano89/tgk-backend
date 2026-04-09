@@ -4,7 +4,8 @@ const WEALTH_CONFIG = {
   metadata: {
     name: 'TGK Wealth',
     vertical: 'wealth',
-    description: 'Financial services wealth management demo portal'
+    description: 'Financial services wealth management demo portal',
+    presetKey: 'account-opening'
   },
   branding: {
     color: '#3b5bdb',
@@ -80,7 +81,8 @@ const HEALTHCARE_CONFIG = {
   metadata: {
     name: 'MedFlow Health',
     vertical: 'healthcare',
-    description: 'Healthcare provider management demo portal'
+    description: 'Healthcare provider management demo portal',
+    presetKey: 'patient-intake'
   },
   branding: {
     color: '#0d9488',

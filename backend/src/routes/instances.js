@@ -1,10 +1,13 @@
 const express = require('express');
 const { getDb } = require('../database');
 const { DEFAULT_INSTANCES } = require('../instance-configs');
-const { VERTICALS, STORYLINE_PRESETS, PRESETS_BY_KEY, buildConfigFromPreset } = require('../storyline-presets');
+const { VERTICALS, STORYLINE_PRESETS, PRESETS_BY_KEY, buildConfigFromPreset, buildProfileFromPreset, validateConfig } = require('../storyline-presets');
+const { createRecordForApp } = require('../resources/service');
 const { createError, normalizeSlug, route } = require('../utils');
 
 const router = express.Router();
+
+let _seededOnce = false;
 
 function ensureSeeded(db) {
   const count = db.prepare('SELECT COUNT(*) as n FROM instances').get().n;
@@ -14,11 +17,57 @@ function ensureSeeded(db) {
       insert.run(slug, JSON.stringify(config));
     }
   }
+
+  // Backfill seed data for any preset-based instances that are missing data (once per boot)
+  if (!_seededOnce) {
+    _seededOnce = true;
+    const rows = db.prepare('SELECT slug, config FROM instances').all();
+    for (const row of rows) {
+      try {
+        let config = JSON.parse(row.config);
+        // Patch legacy default instances that are missing presetKey
+        if (!config.metadata?.presetKey && DEFAULT_INSTANCES[row.slug]?.metadata?.presetKey) {
+          config.metadata = { ...config.metadata, presetKey: DEFAULT_INSTANCES[row.slug].metadata.presetKey };
+          db.prepare('UPDATE instances SET config = ? WHERE slug = ?').run(JSON.stringify(config), row.slug);
+        }
+        if (seedInstance(db, row.slug, config)) {
+          console.log(`[auto-seed] Backfilled data for "${row.slug}"`);
+        }
+      } catch (err) {
+        console.warn(`[auto-seed] Failed for "${row.slug}":`, err.message);
+      }
+    }
+  }
 }
 
 function parseRow(row) {
   if (!row) return null;
   return { slug: row.slug, config: JSON.parse(row.config), createdAt: row.created_at, updatedAt: row.updated_at };
+}
+
+/**
+ * Seed demo data for a single instance using its config's presetKey.
+ * Returns true if seeded, false if no preset or already has data.
+ */
+function seedInstance(db, slug, config) {
+  const presetKey = config?.metadata?.presetKey;
+  if (!presetKey) return false;
+
+  const preset = PRESETS_BY_KEY[presetKey];
+  if (!preset) return false;
+
+  // Skip if instance already has employee data
+  const hasData = db.prepare('SELECT COUNT(*) as n FROM employees WHERE app_slug = ?').get(slug).n > 0;
+  if (hasData) return false;
+
+  const profile = buildProfileFromPreset(preset, slug);
+  if (!profile) return false;
+
+  for (const emp of profile.employees) createRecordForApp(db, slug, 'employees', emp);
+  for (const cust of profile.customers) createRecordForApp(db, slug, 'customers', cust);
+  for (const env of profile.envelopes) createRecordForApp(db, slug, 'envelopes', env);
+  for (const t of profile.tasks) createRecordForApp(db, slug, 'tasks', t);
+  return true;
 }
 
 // GET /api/instances — list all instances
@@ -60,9 +109,19 @@ router.post('/from-preset', route((req, res) => {
   if (existing) throw createError(409, `Instance "${slug}" already exists.`);
 
   const config = buildConfigFromPreset(preset, overrides || {});
+  validateConfig(config);
   db.prepare('INSERT INTO instances (slug, config) VALUES (?, ?)').run(slug, JSON.stringify(config));
+
+  // Auto-seed demo data from the preset's seed descriptor
+  let seeded = false;
+  try {
+    seeded = seedInstance(db, slug, config);
+  } catch (seedErr) {
+    console.warn(`[from-preset] Seed failed for "${slug}":`, seedErr.message);
+  }
+
   const row = db.prepare('SELECT * FROM instances WHERE slug = ?').get(slug);
-  res.status(201).json(parseRow(row));
+  res.status(201).json({ ...parseRow(row), seeded });
 }));
 
 // GET /api/instances/:slug — get one instance
@@ -84,6 +143,7 @@ router.post('/', route((req, res) => {
   const slug = normalizeSlug(rawSlug);
   if (!slug) throw createError(400, 'Missing or invalid slug.');
   if (!config || typeof config !== 'object') throw createError(400, 'Missing config object.');
+  validateConfig(config);
 
   const existing = db.prepare('SELECT slug FROM instances WHERE slug = ?').get(slug);
   if (existing) throw createError(409, `Instance "${slug}" already exists.`);
@@ -91,6 +151,22 @@ router.post('/', route((req, res) => {
   db.prepare('INSERT INTO instances (slug, config) VALUES (?, ?)').run(slug, JSON.stringify(config));
   const row = db.prepare('SELECT * FROM instances WHERE slug = ?').get(slug);
   res.status(201).json(parseRow(row));
+}));
+
+// POST /api/instances/:slug/seed — seed demo data for an instance
+router.post('/:slug/seed', route((req, res) => {
+  const db = getDb();
+  const slug = normalizeSlug(req.params.slug);
+  if (!slug) throw createError(400, 'Invalid instance slug.');
+  const row = db.prepare('SELECT * FROM instances WHERE slug = ?').get(slug);
+  if (!row) throw createError(404, `Instance "${slug}" not found.`);
+  const config = JSON.parse(row.config);
+  const seeded = seedInstance(db, slug, config);
+  if (!seeded) {
+    res.json({ seeded: false, message: 'No preset key found or instance already has data.' });
+    return;
+  }
+  res.json({ seeded: true });
 }));
 
 // PUT /api/instances/:slug — update an instance
