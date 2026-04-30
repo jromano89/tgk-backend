@@ -34,6 +34,13 @@
       <div x-show="canSeeIamProducts()">
         <div x-show="!sidebarCollapsed" class="tgk-portal-nav__section">IAM Products</div>
         <div data-partial="../shared/partials/iam-products-nav.html"></div>
+        <template x-if="isActiveIamProduct('workspaces') && !sidebarCollapsed">
+          <button @click="openWorkspaceAccount()" :disabled="workspaceLoading" class="tgk-portal-nav__subitem">
+            <svg :style="workspaceLoading ? 'display:none' : ''" class="tgk-portal-nav__subitem-icon" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+            <svg :style="workspaceLoading ? '' : 'display:none'" class="tgk-portal-nav__subitem-icon tgk-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v3m6.364 1.636-2.121 2.121M21 12h-3m-1.636 6.364-2.121-2.121M12 21v-3m-6.364-1.636 2.121-2.121M3 12h3m1.636-6.364 2.121 2.121"/></svg>
+            <span class="tgk-portal-nav__label" x-text="workspaceLoading ? 'Creating…' : 'Open Account'"></span>
+          </button>
+        </template>
       </div>
 
       <div x-show="canSeeSettings()" class="tgk-portal-nav__divider"></div>
@@ -300,6 +307,57 @@
                 </template>
               </div>
             </div>
+            <div class="tgk-surface-panel tgk-surface-panel--md">
+              <div class="tgk-panel-heading tgk-panel-heading--spaced">
+                <h3 class="tgk-panel-title">Workspaces</h3>
+              </div>
+              <template x-if="selectedContactWorkspaces.length === 0">
+                <div class="tgk-empty-panel tgk-empty-panel--compact">
+                  <div class="tgk-empty-panel__icon">
+                    <svg class="tgk-icon tgk-icon--lg tgk-icon--muted" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 4.5h6.75v6.75H4.5zM12.75 4.5h6.75v6.75h-6.75zM4.5 12.75h6.75v6.75H4.5zM12.75 12.75h6.75v6.75h-6.75z"/></svg>
+                  </div>
+                  <div class="tgk-empty-panel__title">No workspaces yet</div>
+                  <p class="tgk-empty-panel__copy">Open an account to create a workspace for this client.</p>
+                </div>
+              </template>
+              <template x-if="selectedContactWorkspaces.length > 0">
+                <div class="tgk-record-list">
+                  <template x-for="ws in selectedContactWorkspaces" :key="ws.workspace_id">
+                    <div>
+                      <div class="tgk-record-row">
+                        <div class="tgk-record-row__main">
+                          <div class="tgk-record-row__content">
+                            <div class="tgk-record-row__title" x-text="ws.name"></div>
+                            <div class="tgk-record-row__meta">
+                              <span class="tgk-record-row__id" x-text="ws.workspace_id"></span>
+                              <span class="u-row u-gap-2">
+                                <span class="tgk-record-row__meta-dot"></span>
+                                <span x-text="new Date(ws.created_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })"></span>
+                              </span>
+                            </div>
+                          </div>
+                          <div class="tgk-record-row__actions">
+                            <button @click="getWorkspaceDetail(ws.workspace_id)" class="tgk-icon-button" :title="selectedWorkspaceDetailId === ws.workspace_id ? 'Hide details' : 'View details'">
+                              <svg class="tgk-icon tgk-icon--md" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                      <template x-if="selectedWorkspaceDetailId === ws.workspace_id && selectedWorkspaceDetail">
+                        <div class="tgk-workspace-detail">
+                          <template x-for="[key, val] in Object.entries(selectedWorkspaceDetail)" :key="key">
+                            <div class="tgk-workspace-detail__row">
+                              <span class="tgk-workspace-detail__key" x-text="key"></span>
+                              <span class="tgk-workspace-detail__val" x-text="typeof val === 'object' ? JSON.stringify(val) : val"></span>
+                            </div>
+                          </template>
+                        </div>
+                      </template>
+                    </div>
+                  </template>
+                </div>
+              </template>
+            </div>
           </div>
         </div>
       </div>
@@ -433,8 +491,79 @@
     <!-- MONITOR VIEW -->
     <div x-show="view === 'monitor'" class="tgk-page-shell u-scroll-y" data-partial="../shared/partials/monitor-view.html"></div>
 
+    <!-- WORKSPACES VIEW -->
+    <div x-show="view === 'workspaces'" class="tgk-page-shell u-scroll-y">
+      <div class="tgk-page-stack">
+        <div class="tgk-page-header">
+          <h1 class="tgk-page-title">Workspaces</h1>
+        </div>
+        <template x-if="!selectedContact">
+          <div class="tgk-empty-panel">
+            <div class="tgk-empty-panel__icon">
+              <svg class="tgk-icon tgk-icon--lg tgk-icon--muted" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 4.5h6.75v6.75H4.5zM12.75 4.5h6.75v6.75h-6.75zM4.5 12.75h6.75v6.75H4.5zM12.75 12.75h6.75v6.75h-6.75z"/></svg>
+            </div>
+            <div class="tgk-empty-panel__title">No client selected</div>
+            <p class="tgk-empty-panel__copy">Select a client from the dashboard to view their workspaces.</p>
+          </div>
+        </template>
+        <template x-if="selectedContact">
+          <div class="tgk-surface-panel tgk-surface-panel--md">
+            <div class="tgk-panel-heading tgk-panel-heading--spaced">
+              <h3 class="tgk-panel-title" x-text="selectedContact.name + ' — Workspaces'"></h3>
+            </div>
+            <template x-if="selectedContactWorkspaces.length === 0">
+              <div class="tgk-empty-panel tgk-empty-panel--compact">
+                <div class="tgk-empty-panel__icon">
+                  <svg class="tgk-icon tgk-icon--lg tgk-icon--muted" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 4.5h6.75v6.75H4.5zM12.75 4.5h6.75v6.75h-6.75zM4.5 12.75h6.75v6.75H4.5zM12.75 12.75h6.75v6.75h-6.75z"/></svg>
+                </div>
+                <div class="tgk-empty-panel__title">No workspaces yet</div>
+                <p class="tgk-empty-panel__copy">Open an account to create a workspace for this client.</p>
+              </div>
+            </template>
+            <template x-if="selectedContactWorkspaces.length > 0">
+              <div class="tgk-record-list">
+                <template x-for="ws in selectedContactWorkspaces" :key="ws.workspace_id">
+                  <div>
+                    <div class="tgk-record-row">
+                      <div class="tgk-record-row__main">
+                        <div class="tgk-record-row__content">
+                          <div class="tgk-record-row__title" x-text="ws.name"></div>
+                          <div class="tgk-record-row__meta">
+                            <span class="tgk-record-row__id" x-text="ws.workspace_id"></span>
+                            <span class="u-row u-gap-2">
+                              <span class="tgk-record-row__meta-dot"></span>
+                              <span x-text="new Date(ws.created_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })"></span>
+                            </span>
+                          </div>
+                        </div>
+                        <div class="tgk-record-row__actions">
+                          <button @click="getWorkspaceDetail(ws.workspace_id)" class="tgk-icon-button" :title="selectedWorkspaceDetailId === ws.workspace_id ? 'Hide details' : 'View details'">
+                            <svg class="tgk-icon tgk-icon--md" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    <template x-if="selectedWorkspaceDetailId === ws.workspace_id && selectedWorkspaceDetail">
+                      <div class="tgk-workspace-detail">
+                        <template x-for="[key, val] in Object.entries(selectedWorkspaceDetail)" :key="key">
+                          <div class="tgk-workspace-detail__row">
+                            <span class="tgk-workspace-detail__key" x-text="key"></span>
+                            <span class="tgk-workspace-detail__val" x-text="typeof val === 'object' ? JSON.stringify(val) : val"></span>
+                          </div>
+                        </template>
+                      </div>
+                    </template>
+                  </div>
+                </template>
+              </div>
+            </template>
+          </div>
+        </template>
+      </div>
+    </div>
+
     <!-- IAM PRODUCT PLACEHOLDER -->
-    <div x-show="getCurrentIamPlaceholder()" class="tgk-page-shell" data-partial="../shared/partials/iam-placeholder-view.html"></div>
+    <div x-show="getCurrentIamPlaceholder() && view !== 'workspaces'" class="tgk-page-shell" data-partial="../shared/partials/iam-placeholder-view.html"></div>
 
     <!-- SETTINGS VIEW -->
     <div x-show="canSeeSettings() && view === 'settings'" class="tgk-page-shell">

@@ -312,8 +312,73 @@
       <!-- MONITOR TAB -->
       <div x-show="tab === 'monitor'" data-partial="../shared/partials/monitor-view.html"></div>
 
+      <!-- WORKSPACES TAB -->
+      <div x-show="tab === 'workspaces'">
+        <div class="tgk-page-stack">
+          <div class="tgk-page-header">
+            <h1 class="tgk-page-title">Workspaces</h1>
+          </div>
+          <div class="tgk-surface-panel tgk-surface-panel--md">
+            <div class="tgk-panel-heading tgk-panel-heading--spaced">
+              <h3 class="tgk-panel-title" x-text="(clientName || 'Your') + ' — Workspaces'"></h3>
+            </div>
+            <template x-if="workspacesLoading">
+              <div class="tgk-empty-panel tgk-empty-panel--compact">
+                <p class="tgk-empty-panel__copy">Loading workspaces…</p>
+              </div>
+            </template>
+            <template x-if="!workspacesLoading && clientWorkspaces.length === 0">
+              <div class="tgk-empty-panel tgk-empty-panel--compact">
+                <div class="tgk-empty-panel__icon">
+                  <svg class="tgk-icon tgk-icon--lg tgk-icon--muted" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 4.5h6.75v6.75H4.5zM12.75 4.5h6.75v6.75h-6.75zM4.5 12.75h6.75v6.75H4.5zM12.75 12.75h6.75v6.75h-6.75z"/></svg>
+                </div>
+                <div class="tgk-empty-panel__title">No workspaces yet</div>
+                <p class="tgk-empty-panel__copy">Your advisor will set up a workspace when opening your account.</p>
+              </div>
+            </template>
+            <template x-if="!workspacesLoading && clientWorkspaces.length > 0">
+              <div class="tgk-record-list">
+                <template x-for="ws in clientWorkspaces" :key="ws.workspace_id">
+                  <div>
+                    <div class="tgk-record-row">
+                      <div class="tgk-record-row__main">
+                        <div class="tgk-record-row__content">
+                          <div class="tgk-record-row__title" x-text="ws.name"></div>
+                          <div class="tgk-record-row__meta">
+                            <span class="tgk-record-row__id" x-text="ws.workspace_id"></span>
+                            <span class="u-row u-gap-2">
+                              <span class="tgk-record-row__meta-dot"></span>
+                              <span x-text="new Date(ws.created_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })"></span>
+                            </span>
+                          </div>
+                        </div>
+                        <div class="tgk-record-row__actions">
+                          <button @click="getWorkspaceDetail(ws.workspace_id)" class="tgk-icon-button" :title="selectedWorkspaceDetailId === ws.workspace_id ? 'Hide details' : 'View details'">
+                            <svg class="tgk-icon tgk-icon--md" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    <template x-if="selectedWorkspaceDetailId === ws.workspace_id && selectedWorkspaceDetail">
+                      <div class="tgk-workspace-detail">
+                        <template x-for="[key, val] in Object.entries(selectedWorkspaceDetail)" :key="key">
+                          <div class="tgk-workspace-detail__row">
+                            <span class="tgk-workspace-detail__key" x-text="key"></span>
+                            <span class="tgk-workspace-detail__val" x-text="typeof val === 'object' ? JSON.stringify(val) : val"></span>
+                          </div>
+                        </template>
+                      </div>
+                    </template>
+                  </div>
+                </template>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+
       <!-- IAM PRODUCT PLACEHOLDER -->
-      <div x-show="getCurrentIamPlaceholder()" data-partial="../shared/partials/iam-placeholder-view.html"></div>
+      <div x-show="getCurrentIamPlaceholder() && tab !== 'workspaces'" data-partial="../shared/partials/iam-placeholder-view.html"></div>
 
       <!-- SETTINGS TAB -->
       <div x-show="canSeeSettings() && tab === 'settings'">

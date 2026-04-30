@@ -29,6 +29,10 @@ function investorApp() {
     envelopes: [],
     loading: true,
     tasks: [],
+    clientWorkspaces: [],
+    workspacesLoading: false,
+    selectedWorkspaceDetail: null,
+    selectedWorkspaceDetailId: null,
     showTaskWorkflow: false,
     taskWorkflowKind: 'asset-transfer',
     taskWorkflowTask: null,
@@ -76,6 +80,42 @@ function investorApp() {
 
       if (resolvedTab === 'monitor') {
         this.ensureMonitorAlerts();
+      }
+      if (resolvedTab === 'workspaces') {
+        void this.loadClientWorkspaces();
+      }
+    },
+
+    async getWorkspaceDetail(workspaceId) {
+      if (this.selectedWorkspaceDetailId === workspaceId) {
+        this.selectedWorkspaceDetail = null;
+        this.selectedWorkspaceDetailId = null;
+        return;
+      }
+      try {
+        const data = await TGK_API.get(`/api/workspace/${workspaceId}`);
+        this.selectedWorkspaceDetail = data;
+        this.selectedWorkspaceDetailId = workspaceId;
+      } catch (e) {
+        console.error('Failed to get workspace detail:', e);
+      }
+    },
+
+    async loadClientWorkspaces() {
+      if (!this.selectedClient) return;
+      this.workspacesLoading = true;
+      try {
+        const data = await TGK_API.get('/api/workspace/list');
+        const workspaces = data.workspaces || data || [];
+        const customerId = this.selectedClient.id || '';
+        this.clientWorkspaces = workspaces.filter(w =>
+          customerId && (w.name || '').includes(customerId)
+        );
+      } catch (e) {
+        console.error('Failed to load workspaces:', e);
+        this.clientWorkspaces = [];
+      } finally {
+        this.workspacesLoading = false;
       }
     },
 

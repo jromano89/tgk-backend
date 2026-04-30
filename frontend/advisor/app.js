@@ -69,6 +69,12 @@ function advisorApp() {
     _clientDetailEventsSubscription: null,
     _clientDetailEventsTimeout: null,
     searchQuery: '',
+    firstEnvelopeID: null,
+    firstWorkspaceID: null,
+    workspaceLoading: false,
+    selectedContactWorkspaces: [],
+    selectedWorkspaceDetail: null,
+    selectedWorkspaceDetailId: null,
     showOnboarding: false,
     maestroInstanceUrl: '',
     maestroError: null,
@@ -116,6 +122,9 @@ function advisorApp() {
       }
       if (resolvedView === 'monitor') {
         this.ensureMonitorAlerts();
+      }
+      if (resolvedView === 'workspaces') {
+        void this.loadClientWorkspaces();
       }
     },
 
@@ -254,8 +263,12 @@ function advisorApp() {
         this.selectedContactAccounts = [];
         this.selectedContactEnvelopes = [];
       }
+      this.selectedContactWorkspaces = [];
+      this.selectedWorkspaceDetail = null;
+      this.selectedWorkspaceDetailId = null;
       this.setView('client');
       this.startClientDetailEvents(contact.id);
+      void this.loadClientWorkspaces();
     },
 
     startClientDetailEvents(contactId) {
@@ -365,6 +378,67 @@ function advisorApp() {
 
     closeOnboarding() {
       this.resetOnboardingState();
+    },
+
+    async loadClientWorkspaces() {
+      if (!this.selectedContact) return;
+      try {
+        const data = await TGK_API.get('/api/workspace/list');
+        const workspaces = data.workspaces || data || [];
+        const customerId = this.selectedContact.id || '';
+this.selectedContactWorkspaces = workspaces.filter(w =>
+          customerId && (w.name || '').includes(customerId)
+        );
+      } catch (e) {
+        console.error('Failed to load workspaces:', e);
+        this.selectedContactWorkspaces = [];
+      }
+    },
+
+    async getWorkspaceDetail(workspaceId) {
+      if (this.selectedWorkspaceDetailId === workspaceId) {
+        this.selectedWorkspaceDetail = null;
+        this.selectedWorkspaceDetailId = null;
+        return;
+      }
+      try {
+        const data = await TGK_API.get(`/api/workspace/${workspaceId}`);
+        this.selectedWorkspaceDetail = data;
+        this.selectedWorkspaceDetailId = workspaceId;
+      } catch (e) {
+        console.error('Failed to get workspace detail:', e);
+      }
+    },
+
+    async openWorkspaceAccount() {
+      if (!this.selectedContact) {
+        alert('Please select an investor first before opening an account.');
+        return;
+      }
+
+      const templateId = window.TGK_CONFIG?.workspace?.brokerageFormTemplateId;
+      if (!templateId) {
+        alert('Workspace template ID is not configured.');
+        return;
+      }
+
+      this.workspaceLoading = true;
+      try {
+        const result = await TGK_API.post('/api/workspace/open', {
+          templateId,
+          recipientName: this.selectedContact.name,
+          recipientEmail: this.selectedContact.email,
+          customerId: this.selectedContact.id,
+          roleName: 'PrimaryOwner'
+        });
+        this.firstEnvelopeID = result.envelopeId;
+        this.firstWorkspaceID = result.workspaceId;
+        void this.loadClientWorkspaces();
+      } catch (e) {
+        console.error('Failed to open workspace account:', e);
+      } finally {
+        this.workspaceLoading = false;
+      }
     },
 
     clearOnboardingRedirectTimer() {

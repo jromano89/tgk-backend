@@ -92,6 +92,7 @@ a.alt:hover{background:rgba(255,255,255,.1)}
 
   app.use('/api/auth', require('./routes/auth'));
   app.use('/api/data', require('./routes/resources'));
+  app.use('/api/workspace', require('./routes/workspace'));
   app.use('/maestro', require('./routes/maestro'));
 
   app.get('/api/health', (req, res) => {
