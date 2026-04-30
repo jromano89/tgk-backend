@@ -107,7 +107,7 @@ function getIamProduct(productKey) {
 
 function getIamProductPlaceholder(productKey) {
   const product = getIamProduct(productKey);
-  if (!product || product.key === 'monitor') {
+  if (!product || product.key === 'monitor' || product.key === 'workspaces') {
     return null;
   }
 

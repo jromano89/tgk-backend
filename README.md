@@ -21,10 +21,10 @@ The frontend has no build step. It is plain HTML, CSS, and JS, served by the sma
 cp backend/.env.example backend/.env
 ```
 
-2. Install backend dependencies if needed.
+2. Install project dependencies from the repo root
 
 ```bash
-npm install --prefix backend
+npm install
 ```
 
 3. Start both services from the repo root.
@@ -51,6 +51,7 @@ Useful local URLs:
 - The backend-hosted DocuSign consent callback is fixed at `/api/auth/callback`.
 - The frontend gets DocuSign access tokens from `POST /api/auth/token` and sends downstream API calls through `/api/proxy?url=<encoded-target-url>`.
 - `GET /api/data/events?app=...` opens an app-scoped Server-Sent Events stream for `connected` and `data.changed` events from REST data writes and Maestro Data IO writes.
+- Add all new features in the frontend using the API proxy pattern; treat the backend as a finished product and do not modify it.
 
 ## Deployment
 

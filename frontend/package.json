@@ -2,11 +2,7 @@
   "name": "tgk-frontend",
   "private": true,
   "version": "1.0.0",
-  "description": "TGK Wealth demo frontend",
   "scripts": {
     "start": "node server.js"
-  },
-  "engines": {
-    "node": "20.x"
   }
 }

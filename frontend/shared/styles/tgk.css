@@ -2926,6 +2926,113 @@ table {
   max-width: 720px
 }
 
+.tgk-workspaces-view {
+  max-width: 1040px;
+  gap: 16px
+}
+
+.tgk-workspaces-intro {
+  position: relative;
+  overflow: hidden
+}
+
+.tgk-workspaces-intro::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at top right,color-mix(in oklab,var(--color-brand,#4c6ef5) 15%,transparent),transparent 58%),radial-gradient(circle at left 88%,rgba(148,163,184,0.14),transparent 42%);
+  pointer-events: none
+}
+
+.tgk-workspaces-intro > * {
+  position: relative;
+  z-index: 1
+}
+
+.tgk-workspaces-intro__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px
+}
+
+.tgk-workspaces-intro__indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  border: 1px solid rgba(148,163,184,0.3);
+  background: rgba(255,255,255,0.76);
+  padding: 5px 10px;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap
+}
+
+.tgk-workspaces-intro__indicator::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: color-mix(in oklab,var(--color-brand,#4c6ef5) 76%,white);
+  box-shadow: 0 0 0 4px color-mix(in oklab,var(--color-brand,#4c6ef5) 14%,transparent)
+}
+
+.tgk-workspaces-view__title {
+  margin-top: 12px
+}
+
+.tgk-workspaces-view__copy {
+  margin-top: 6px;
+  max-width: 620px
+}
+
+.tgk-workspaces-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px
+}
+
+.tgk-workspaces-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(148,163,184,0.24);
+  background: rgba(255,255,255,0.86);
+  padding: 7px 11px;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1
+}
+
+.tgk-workspaces-tag::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: color-mix(in oklab,var(--color-brand,#4c6ef5) 72%,#94a3b8)
+}
+
+.tgk-workspaces-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px
+}
+
+.tgk-workspaces-form__actions {
+  align-items: center;
+  justify-content: flex-start
+}
+
+.tgk-workspaces-status {
+  margin-top: 14px
+}
+
 .tgk-screen-state {
   display: flex;
   min-height: 100vh;
@@ -3715,6 +3822,10 @@ table {
     grid-template-columns: repeat(2,minmax(0,1fr))
   }
 
+  .tgk-workspaces-intro__header {
+    flex-wrap: wrap
+  }
+
   .tgk-agreements-content {
     grid-template-columns: 1fr
   }
@@ -3832,6 +3943,15 @@ table {
   }
 
   .tgk-settings-card__header--split,.tgk-banner {
+    flex-direction: column
+  }
+
+  .tgk-workspaces-form__actions {
+    align-items: stretch
+  }
+
+  .tgk-workspaces-intro__header {
+    align-items: flex-start;
     flex-direction: column
   }
 

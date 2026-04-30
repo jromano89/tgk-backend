@@ -1,8 +1,7 @@
 {
   "name": "tgk-demo-backend",
+  "private": true,
   "version": "1.0.0",
-  "description": "Docusign Demo Backend-as-a-Service",
-  "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
     "dev": "node --watch src/index.js"
