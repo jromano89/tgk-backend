@@ -1,6 +1,6 @@
 # TGK Demo Platform
 
-TGK Wealth demo platform for DocuSign IAM and Maestro workflows.
+TGK Wealth demo platform for Docusign IAM and Maestro workflows.
 
 The intent is to keep the demo frontends simple and static while reusing one lightweight backend for auth, proxying, local persistence, and Maestro bridge behavior.
 
@@ -9,8 +9,8 @@ The frontend has no build step. It is plain HTML, CSS, and JS, served by the sma
 ## Structure
 
 - `frontend/`: portal launcher plus advisor and investor demo portals
-- `backend/`: Express/SQLite API, DocuSign auth/proxy, Maestro bridge, SSE data-change notifications, architecture page
-- `frontend/config.js`: frontend config, workflow IDs, mode gate, and DocuSign settings
+- `backend/`: Express/SQLite API, Docusign auth/proxy, Maestro bridge, SSE data-change notifications
+- `frontend/config.js`: frontend config, workflow IDs, mode gate, and Docusign settings
 - `scripts/seed-demo-api.js`: optional demo data loader
 
 ## Local
