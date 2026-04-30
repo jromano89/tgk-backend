@@ -1,18 +1,18 @@
 const { createServiceError } = require('./service-utils');
 const customerService = require('./customer-service');
 const employeeService = require('./employee-service');
-const envelopeService = require('./envelope-service');
+const transactionService = require('./transaction-service');
 const taskService = require('./task-service');
 const customerTypeDefs = require('./customer-type-definitions');
 const employeeTypeDefs = require('./employee-type-definitions');
-const envelopeTypeDefs = require('./envelope-type-definitions');
+const transactionTypeDefs = require('./transaction-type-definitions');
 const taskTypeDefs = require('./task-type-definitions');
 
 const REGISTRY = [
   { service: customerService, typeDefs: customerTypeDefs },
   { service: employeeService, typeDefs: employeeTypeDefs },
   { service: taskService, typeDefs: taskTypeDefs },
-  { service: envelopeService, typeDefs: envelopeTypeDefs }
+  { service: transactionService, typeDefs: transactionTypeDefs }
 ];
 
 function findRegistration(typeName) {

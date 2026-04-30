@@ -28,7 +28,7 @@
         class="tgk-portal-nav__item"
         :class="{ 'tgk-portal-nav__item--active': view === 'documents', 'tgk-portal-nav__item--collapsed': sidebarCollapsed }">
         <svg class="tgk-portal-nav__icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-        <span x-show="!sidebarCollapsed" class="tgk-portal-nav__label">Agreements</span>
+        <span x-show="!sidebarCollapsed" class="tgk-portal-nav__label">Documents</span>
       </button>
 
       <div x-show="canSeeIamProducts()">
@@ -261,38 +261,42 @@
               <div class="tgk-panel-heading tgk-panel-heading--spaced">
                 <h3 class="tgk-panel-title">Documents</h3>
               </div>
-              <template x-if="selectedContactEnvelopes.length === 0">
+              <template x-if="selectedContactTransactions.length === 0">
                 <div class="tgk-empty-panel tgk-empty-panel--compact">
                   <div class="tgk-empty-panel__icon">
                     <svg class="tgk-icon tgk-icon--lg tgk-icon--muted" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                   </div>
                   <div class="tgk-empty-panel__title">No documents yet</div>
-                  <p class="tgk-empty-panel__copy">Completed and in-flight agreement packets will appear here.</p>
+                  <p class="tgk-empty-panel__copy">Completed and in-flight documents will appear here.</p>
                 </div>
               </template>
               <div class="tgk-record-list">
-                <template x-for="env in selectedContactEnvelopes" :key="env.id">
+                <template x-for="env in selectedContactTransactions" :key="env.id">
                   <div class="tgk-record-row">
                     <div class="tgk-record-row__main">
                       <div class="tgk-record-row__content">
                         <div class="tgk-record-row__title" x-text="env.name || 'Untitled'"></div>
                         <div class="tgk-record-row__meta">
                           <span class="tgk-record-row__id" x-text="env.id || ''"></span>
-                          <template x-if="envelopeTimestampLabel(env)">
+                          <template x-if="transactionTimestampLabel(env)">
                             <span class="u-row u-gap-2">
                               <span class="tgk-record-row__meta-dot"></span>
-                              <span x-text="envelopeTimestampLabel(env)"></span>
+                              <span x-text="transactionTimestampLabel(env)"></span>
                             </span>
                           </template>
                         </div>
                       </div>
                       <div class="tgk-record-row__actions">
-                        <button @click="viewEnvelopeDoc(env)" class="tgk-icon-button" title="View document">
-                          <svg class="tgk-icon tgk-icon--md" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-                        </button>
-                        <button @click="viewEnvelopeHistory(env)" class="tgk-icon-button" title="View history">
-                          <svg class="tgk-icon tgk-icon--md" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        </button>
+                        <template x-if="String(env.type || '').trim().toLowerCase() === 'envelope'">
+                          <div class="u-row u-gap-2">
+                            <button @click="viewTransactionDoc(env)" class="tgk-icon-button" title="View document">
+                              <svg class="tgk-icon tgk-icon--md" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                            </button>
+                            <button @click="viewTransactionHistory(env)" class="tgk-icon-button" title="View history">
+                              <svg class="tgk-icon tgk-icon--md" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </button>
+                          </div>
+                        </template>
                       </div>
                     </div>
                     <span class="tgk-status-badge" :class="statusClasses(env.status)" x-text="env.status || 'unknown'"></span>
@@ -317,7 +321,7 @@
 
           <section class="tgk-agreements-kpi-card">
             <div class="tgk-agreements-kpi-value" x-text="totalAgreementCount"></div>
-            <div class="tgk-agreements-kpi-label">Total Agreements</div>
+            <div class="tgk-agreements-kpi-label">Total Documents</div>
             <div class="tgk-agreements-kpi-meta">+12 this month</div>
           </section>
 
@@ -337,23 +341,23 @@
         <div class="tgk-agreements-content">
           <section class="tgk-agreements-list-panel tgk-surface-panel tgk-surface-panel--md">
             <div class="tgk-panel-heading tgk-panel-heading--spaced">
-              <h3 class="tgk-panel-title">Agreements</h3>
+              <h3 class="tgk-panel-title">Documents</h3>
             </div>
 
             <div class="tgk-panel-heading--spaced">
               <label class="tgk-search-field tgk-search-field--wide">
                 <svg class="tgk-search-field__icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-                <input x-model="agreementSearchQuery" type="text" placeholder="Search agreements" class="tgk-form-input tgk-form-input--compact tgk-search-field__input">
+                <input x-model="agreementSearchQuery" type="text" placeholder="Search documents" class="tgk-form-input tgk-form-input--compact tgk-search-field__input">
               </label>
             </div>
 
             <div class="tgk-agreements-list-scroll">
               <template x-if="agreementsLoading">
-                <div class="tgk-inline-message">Loading agreements...</div>
+                <div class="tgk-inline-message">Loading documents...</div>
               </template>
 
               <template x-if="!agreementsLoading && filteredAgreements.length === 0">
-                <div class="tgk-inline-message">No agreements found.</div>
+                <div class="tgk-inline-message">No documents found.</div>
               </template>
 
               <div class="tgk-record-list" x-show="!agreementsLoading && filteredAgreements.length > 0">
@@ -363,11 +367,11 @@
                       <div class="tgk-record-row__content">
                         <div class="tgk-record-row__title" x-text="env.name || 'Untitled'"></div>
                         <div class="tgk-record-row__meta">
-                            <span x-text="getAgreementInvestorName(env)"></span>
-                          <template x-if="envelopeTimestampLabel(env)">
+                          <span x-text="getAgreementInvestorName(env)"></span>
+                          <template x-if="transactionTimestampLabel(env)">
                             <span class="u-row u-gap-2">
                               <span class="tgk-record-row__meta-dot"></span>
-                              <span x-text="envelopeTimestampLabel(env)"></span>
+                              <span x-text="transactionTimestampLabel(env)"></span>
                             </span>
                           </template>
                           <span class="tgk-record-row__id" x-text="env.id || ''"></span>
@@ -375,12 +379,16 @@
                       </div>
 
                       <div class="tgk-record-row__actions">
-                        <button @click="viewEnvelopeDoc(env)" class="tgk-icon-button" title="View document">
-                          <svg class="tgk-icon tgk-icon--md" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-                        </button>
-                        <button @click="viewEnvelopeHistory(env)" class="tgk-icon-button" title="View history">
-                          <svg class="tgk-icon tgk-icon--md" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        </button>
+                        <template x-if="String(env.type || '').trim().toLowerCase() === 'envelope'">
+                          <div class="u-row u-gap-2">
+                            <button @click="viewTransactionDoc(env)" class="tgk-icon-button" title="View document">
+                              <svg class="tgk-icon tgk-icon--md" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                            </button>
+                            <button @click="viewTransactionHistory(env)" class="tgk-icon-button" title="View history">
+                              <svg class="tgk-icon tgk-icon--md" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </button>
+                          </div>
+                        </template>
                       </div>
                     </div>
 
@@ -414,7 +422,7 @@
             </section>
 
             <section class="tgk-agreements-panel tgk-agreements-panel--volume">
-              <div class="tgk-agreements-panel-title">Agreement Volume — Last 12 Months</div>
+              <div class="tgk-agreements-panel-title">Document Volume — Last 12 Months</div>
               <div class="tgk-agreements-chart-surface">
                 <div class="tgk-agreements-chart-frame">
                   <div class="tgk-agreements-bar-chart">
@@ -536,5 +544,5 @@
 
   </main>
 
-  <div x-init="mountEnvelopeModals($el)"></div>
+  <div x-init="mountTransactionModals($el)"></div>
 </div>

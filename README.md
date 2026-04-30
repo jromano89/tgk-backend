@@ -8,7 +8,7 @@ The frontend has no build step. It is plain HTML, CSS, and JS, served by the sma
 
 ## Structure
 
-- `frontend/`: launcher plus advisor and investor demo portals
+- `frontend/`: portal launcher plus advisor and investor demo portals
 - `backend/`: Express/SQLite API, DocuSign auth/proxy, Maestro bridge, SSE data-change notifications, architecture page
 - `frontend/config.js`: frontend config, workflow IDs, mode gate, and DocuSign settings
 - `scripts/seed-demo-api.js`: optional demo data loader
@@ -33,14 +33,7 @@ npm install --prefix backend
 npm run dev
 ```
 
-4. If you only need one service, run it on its own.
-
-```bash
-npm run backend
-npm run frontend
-```
-
-5. Optionally seed demo data from the repo root.
+4. Optionally seed demo data from the repo root.
 
 ```bash
 npm run seed
@@ -48,16 +41,12 @@ npm run seed
 
 Useful local URLs:
 
-- `http://localhost:8080/`
-- `http://localhost:8080/advisor/`
-- `http://localhost:8080/investor/`
-- `http://localhost:3000/api/health`
-- `http://localhost:3000/architecture/`
+- `http://localhost:8080/` (front-end)
+- `http://localhost:3000/` (back-end)
 
 ## Notes
 
-- `advanced` is the default frontend mode.
-- `normal` mode keeps default branding and hides Settings and IAM Products.
+- Core app data resources are `employees`, `customers`, `transactions` (with free-form `type`), and `tasks`.
 - Frontend runtime config lives in `frontend/config.js`.
 - The backend-hosted DocuSign consent callback is fixed at `/api/auth/callback`.
 - The frontend gets DocuSign access tokens from `POST /api/auth/token` and sends downstream API calls through `/api/proxy?url=<encoded-target-url>`.

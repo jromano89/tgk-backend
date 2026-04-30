@@ -1,3 +1,7 @@
+function isEnvelopeTransaction(record) {
+  return String(record?.type || 'envelope').trim().toLowerCase() === 'envelope';
+}
+
 function investorApp() {
   const preferredAdvisorId = String(window.TGK_CONFIG?.advisorId || '').trim();
 
@@ -18,7 +22,7 @@ function investorApp() {
         'Launching the embedded experience'
       ]
     }),
-    ...createEnvelopeModalHelpers(),
+    ...createTransactionModalHelpers(),
     tab: 'overview',
     advisors: [],
     assignedAdvisor: null,
@@ -26,7 +30,7 @@ function investorApp() {
     selectedClientId: null,
     selectedClient: null,
     accounts: [],
-    envelopes: [],
+    transactions: [],
     loading: true,
     tasks: [],
     showTaskWorkflow: false,
@@ -94,7 +98,7 @@ function investorApp() {
         this.selectedClient = detail;
         TGK_API.setPreferredCustomerId(detail.id);
         this.accounts = detail.accounts || [];
-        this.envelopes = detail.envelopes || [];
+        this.transactions = (detail.transactions || []).filter(isEnvelopeTransaction);
         this.tasks = detail.tasks || [];
         this.assignedAdvisor = this.advisors.find((advisor) => advisor.id === detail.employee_id)
           || this.advisors.find((advisor) => advisor.id === preferredAdvisorId)
@@ -104,7 +108,7 @@ function investorApp() {
         console.error('Failed to load client:', e);
         this.selectedClient = null;
         this.accounts = [];
-        this.envelopes = [];
+        this.transactions = [];
         this.tasks = [];
       }
     },

@@ -119,8 +119,8 @@ function getIamProductPlaceholder(productKey) {
   };
 }
 
-function envelopeTimestampLabel(envelope) {
-  const rawTimestamp = envelope?.created_at || '';
+function transactionTimestampLabel(transaction) {
+  const rawTimestamp = transaction?.created_at || '';
   if (!rawTimestamp) return '';
 
   const date = new Date(rawTimestamp);
@@ -322,21 +322,33 @@ function mountSharedTemplate(element, template) {
   }
 }
 
-function revokeEnvelopePreview(modalState) {
+function revokeTransactionPreview(modalState) {
   const previewUrl = modalState?.previewUrl || '';
   if (previewUrl.startsWith('blob:')) {
     window.URL.revokeObjectURL(previewUrl);
   }
 }
 
-function resolveEnvelopeApiId(envelope) {
-  const data = envelope?.data && typeof envelope.data === 'object' ? envelope.data : {};
+function transactionTypeValue(transaction) {
+  return String(
+    transaction?.type
+    || transaction?.data?.type
+    || ''
+  ).trim().toLowerCase();
+}
+
+function isEnvelopeTransaction(transaction) {
+  return transactionTypeValue(transaction) === 'envelope';
+}
+
+function resolveTransactionEnvelopeApiId(transaction) {
+  const data = transaction?.data && typeof transaction.data === 'object' ? transaction.data : {};
   return String(
     data.docusignEnvelopeId
     || data.docusign_envelope_id
     || data.envelopeId
     || data.envelope_id
-    || envelope?.id
+    || transaction?.id
     || ''
   ).trim();
 }
@@ -345,10 +357,10 @@ function isNotFoundError(error) {
   return /\b404\b/.test(String(error?.message || ''));
 }
 
-function buildFallbackPreviewUrl(envelope, envelopeId) {
-  const title = String(envelope?.name || 'Envelope document').trim() || 'Envelope document';
-  const status = String(envelope?.status || 'unknown').trim() || 'unknown';
-  const timestamp = envelopeTimestampLabel(envelope);
+function buildFallbackPreviewUrl(transaction, envelopeId) {
+  const title = String(transaction?.name || 'Envelope document').trim() || 'Envelope document';
+  const status = String(transaction?.status || 'unknown').trim() || 'unknown';
+  const timestamp = transactionTimestampLabel(transaction);
   const escapedTitle = title
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -400,10 +412,10 @@ function buildFallbackPreviewUrl(envelope, envelopeId) {
 </html>`], { type: 'text/html' }));
 }
 
-function buildFallbackHistory(envelope) {
-  const createdAt = envelope?.created_at || envelope?.createdAt || '';
-  const updatedAt = envelope?.updated_at || envelope?.updatedAt || createdAt;
-  const status = String(envelope?.status || '').trim().toLowerCase();
+function buildFallbackHistory(transaction) {
+  const createdAt = transaction?.created_at || transaction?.createdAt || '';
+  const updatedAt = transaction?.updated_at || transaction?.updatedAt || createdAt;
+  const status = String(transaction?.status || '').trim().toLowerCase();
   const events = [];
 
   if (updatedAt && status && status !== 'created') {
@@ -422,7 +434,7 @@ function buildFallbackHistory(envelope) {
 
   if (createdAt) {
     events.push({
-      Action: 'Envelope added to TGK',
+      Action: 'Transaction added to TGK',
       UserName: 'TGK Demo',
       LogTime: createdAt
     });
@@ -431,31 +443,44 @@ function buildFallbackHistory(envelope) {
   return events;
 }
 
-function createEnvelopeModalHelpers() {
+function createTransactionModalHelpers() {
   return {
-    envelopeDocModal: null,
-    envelopeHistoryModal: null,
+    transactionDocModal: null,
+    transactionHistoryModal: null,
 
-    closeEnvelopeDocModal() {
-      revokeEnvelopePreview(this.envelopeDocModal);
-      this.envelopeDocModal = null;
+    closeTransactionDocModal() {
+      revokeTransactionPreview(this.transactionDocModal);
+      this.transactionDocModal = null;
     },
 
-    closeEnvelopeHistoryModal() {
-      this.envelopeHistoryModal = null;
+    closeTransactionHistoryModal() {
+      this.transactionHistoryModal = null;
     },
 
-    async viewEnvelopeDoc(envelope) {
-      const envelopeId = resolveEnvelopeApiId(envelope);
+    async viewTransactionDoc(transaction) {
+      if (!isEnvelopeTransaction(transaction)) {
+        this.closeTransactionDocModal();
+        this.transactionDocModal = {
+          transactionId: String(transaction?.id || ''),
+          title: transaction?.name || 'Transaction',
+          previewUrl: '',
+          loading: false,
+          error: 'Document preview is currently available only for envelope records.',
+          requestKey: `${Date.now()}`
+        };
+        return;
+      }
+
+      const envelopeId = resolveTransactionEnvelopeApiId(transaction);
       if (!envelopeId) return;
       const docusignEsignBaseUrl = window.TGK_CONFIG?.docusignEsignBaseUrl || 'https://demo.docusign.net/restapi';
 
       const requestKey = `${envelopeId}:${Date.now()}`;
-      const title = envelope?.name || 'Document';
+      const title = transaction?.name || 'Document';
 
-      this.closeEnvelopeDocModal();
-      this.envelopeDocModal = {
-        envelopeId,
+      this.closeTransactionDocModal();
+      this.transactionDocModal = {
+        transactionId: envelopeId,
         title,
         previewUrl: '',
         loading: true,
@@ -477,50 +502,63 @@ function createEnvelopeModalHelpers() {
         const blob = await response.blob();
         const previewUrl = window.URL.createObjectURL(blob);
 
-        if (!this.envelopeDocModal || this.envelopeDocModal.requestKey !== requestKey) {
+        if (!this.transactionDocModal || this.transactionDocModal.requestKey !== requestKey) {
           window.URL.revokeObjectURL(previewUrl);
           return;
         }
 
-        this.envelopeDocModal = {
-          ...this.envelopeDocModal,
+        this.transactionDocModal = {
+          ...this.transactionDocModal,
           previewUrl,
           loading: false,
           error: null
         };
       } catch (error) {
-        if (!this.envelopeDocModal || this.envelopeDocModal.requestKey !== requestKey) {
+        if (!this.transactionDocModal || this.transactionDocModal.requestKey !== requestKey) {
           return;
         }
 
         if (isNotFoundError(error)) {
-          this.envelopeDocModal = {
-            ...this.envelopeDocModal,
-            previewUrl: buildFallbackPreviewUrl(envelope, envelopeId),
+          this.transactionDocModal = {
+            ...this.transactionDocModal,
+            previewUrl: buildFallbackPreviewUrl(transaction, envelopeId),
             loading: false,
             error: null
           };
           return;
         }
 
-        this.envelopeDocModal = {
-          ...this.envelopeDocModal,
+        this.transactionDocModal = {
+          ...this.transactionDocModal,
           loading: false,
           error: error.message || 'Unable to load the document preview.'
         };
       }
     },
 
-    async viewEnvelopeHistory(envelope) {
-      const envelopeId = resolveEnvelopeApiId(envelope);
+    async viewTransactionHistory(transaction) {
+      if (!isEnvelopeTransaction(transaction)) {
+        this.closeTransactionHistoryModal();
+        this.transactionHistoryModal = {
+          transactionId: String(transaction?.id || ''),
+          title: transaction?.name || 'Transaction',
+          events: [],
+          loading: false,
+          error: 'History is currently available only for envelope records.',
+          requestKey: `${Date.now()}`
+        };
+        return;
+      }
+
+      const envelopeId = resolveTransactionEnvelopeApiId(transaction);
       if (!envelopeId) return;
       const docusignEsignBaseUrl = window.TGK_CONFIG?.docusignEsignBaseUrl || 'https://demo.docusign.net/restapi';
 
-      const title = envelope?.name || 'Document';
+      const title = transaction?.name || 'Document';
       const requestKey = `${envelopeId}:${Date.now()}`;
 
-      this.envelopeHistoryModal = {
-        envelopeId,
+      this.transactionHistoryModal = {
+        transactionId: envelopeId,
         title,
         events: [],
         loading: true,
@@ -549,35 +587,35 @@ function createEnvelopeModalHelpers() {
           })
           .filter((fields) => fields.Action);
 
-        if (!this.envelopeHistoryModal || this.envelopeHistoryModal.requestKey !== requestKey) {
+        if (!this.transactionHistoryModal || this.transactionHistoryModal.requestKey !== requestKey) {
           return;
         }
 
-        this.envelopeHistoryModal = {
-          ...this.envelopeHistoryModal,
+        this.transactionHistoryModal = {
+          ...this.transactionHistoryModal,
           events,
           loading: false,
           error: null
         };
       } catch (error) {
-        if (!this.envelopeHistoryModal || this.envelopeHistoryModal.requestKey !== requestKey) {
+        if (!this.transactionHistoryModal || this.transactionHistoryModal.requestKey !== requestKey) {
           return;
         }
 
         if (isNotFoundError(error)) {
-          this.envelopeHistoryModal = {
-            ...this.envelopeHistoryModal,
-            events: buildFallbackHistory(envelope),
+          this.transactionHistoryModal = {
+            ...this.transactionHistoryModal,
+            events: buildFallbackHistory(transaction),
             loading: false,
             error: null
           };
           return;
         }
 
-        this.envelopeHistoryModal = {
-          ...this.envelopeHistoryModal,
+        this.transactionHistoryModal = {
+          ...this.transactionHistoryModal,
           loading: false,
-          error: error.message || 'Unable to load envelope history.'
+          error: error.message || 'Unable to load document history.'
         };
       }
     }
@@ -742,86 +780,86 @@ function sharedSettingsTemplate() {
   `;
 }
 
-function sharedEnvelopeModalTemplate() {
+function sharedTransactionModalTemplate() {
   return `
-    <template x-if="envelopeDocModal">
-      <div class="tgk-modal-shell" @keydown.escape.window="closeEnvelopeDocModal()">
-        <div class="tgk-modal-backdrop" @click="closeEnvelopeDocModal()"></div>
+    <template x-if="transactionDocModal">
+      <div class="tgk-modal-shell" @keydown.escape.window="closeTransactionDocModal()">
+        <div class="tgk-modal-backdrop" @click="closeTransactionDocModal()"></div>
         <div class="tgk-modal-card tgk-modal-card--document" @click.stop>
           <div class="tgk-modal-header">
             <div>
               <div class="tgk-modal-eyebrow">Preview</div>
-              <h3 class="tgk-modal-title" x-text="envelopeDocModal.title"></h3>
-              <div class="tgk-modal-meta" x-text="envelopeDocModal.envelopeId"></div>
+              <h3 class="tgk-modal-title" x-text="transactionDocModal.title"></h3>
+              <div class="tgk-modal-meta" x-text="transactionDocModal.transactionId"></div>
             </div>
             <div class="tgk-inline-actions tgk-inline-actions--end">
-              <button @click="closeEnvelopeDocModal()" class="tgk-modal-close" aria-label="Close document preview">&times;</button>
+              <button @click="closeTransactionDocModal()" class="tgk-modal-close" aria-label="Close document preview">&times;</button>
             </div>
           </div>
 
           <div class="tgk-modal-body tgk-modal-body--document">
-            <template x-if="envelopeDocModal.loading">
+            <template x-if="transactionDocModal.loading">
               <div class="tgk-modal-empty">
                 <div class="tgk-modal-empty__title">Loading document preview</div>
                 <div class="tgk-modal-empty__text">Preparing the combined PDF.</div>
               </div>
             </template>
 
-            <template x-if="!envelopeDocModal.loading && envelopeDocModal.error">
+            <template x-if="!transactionDocModal.loading && transactionDocModal.error">
               <div class="tgk-modal-empty tgk-modal-empty--error">
                 <div class="tgk-modal-empty__title">Unable to load preview</div>
-                <div class="tgk-modal-empty__text" x-text="envelopeDocModal.error"></div>
+                <div class="tgk-modal-empty__text" x-text="transactionDocModal.error"></div>
               </div>
             </template>
 
             <iframe
-              x-show="!envelopeDocModal.loading && !envelopeDocModal.error && envelopeDocModal.previewUrl"
-              :src="envelopeDocModal.previewUrl"
+              x-show="!transactionDocModal.loading && !transactionDocModal.error && transactionDocModal.previewUrl"
+              :src="transactionDocModal.previewUrl"
               class="tgk-document-frame"
-              title="Envelope document preview">
+              title="Document preview">
             </iframe>
           </div>
         </div>
       </div>
     </template>
 
-    <template x-if="envelopeHistoryModal">
-      <div class="tgk-modal-shell" @keydown.escape.window="closeEnvelopeHistoryModal()">
-        <div class="tgk-modal-backdrop" @click="closeEnvelopeHistoryModal()"></div>
+    <template x-if="transactionHistoryModal">
+      <div class="tgk-modal-shell" @keydown.escape.window="closeTransactionHistoryModal()">
+        <div class="tgk-modal-backdrop" @click="closeTransactionHistoryModal()"></div>
         <div class="tgk-modal-card tgk-modal-card--history" @click.stop>
           <div class="tgk-modal-header">
             <div>
-              <div class="tgk-modal-eyebrow">Envelope History</div>
-              <h3 class="tgk-modal-title" x-text="envelopeHistoryModal.title"></h3>
-              <div class="tgk-modal-meta" x-text="envelopeHistoryModal.envelopeId"></div>
+              <div class="tgk-modal-eyebrow">Document History</div>
+              <h3 class="tgk-modal-title" x-text="transactionHistoryModal.title"></h3>
+              <div class="tgk-modal-meta" x-text="transactionHistoryModal.transactionId"></div>
             </div>
-            <button @click="closeEnvelopeHistoryModal()" class="tgk-modal-close" aria-label="Close envelope history">&times;</button>
+            <button @click="closeTransactionHistoryModal()" class="tgk-modal-close" aria-label="Close document history">&times;</button>
           </div>
 
           <div class="tgk-modal-body tgk-modal-body--history">
-            <template x-if="envelopeHistoryModal.loading">
+            <template x-if="transactionHistoryModal.loading">
               <div class="tgk-modal-empty">
                 <div class="tgk-modal-empty__title">Loading activity</div>
                 <div class="tgk-modal-empty__text">Fetching the latest audit trail.</div>
               </div>
             </template>
 
-            <template x-if="!envelopeHistoryModal.loading && envelopeHistoryModal.error">
+            <template x-if="!transactionHistoryModal.loading && transactionHistoryModal.error">
               <div class="tgk-modal-empty tgk-modal-empty--error">
                 <div class="tgk-modal-empty__title">Unable to load history</div>
-                <div class="tgk-modal-empty__text" x-text="envelopeHistoryModal.error"></div>
+                <div class="tgk-modal-empty__text" x-text="transactionHistoryModal.error"></div>
               </div>
             </template>
 
-            <template x-if="!envelopeHistoryModal.loading && !envelopeHistoryModal.error && envelopeHistoryModal.events.length === 0">
+            <template x-if="!transactionHistoryModal.loading && !transactionHistoryModal.error && transactionHistoryModal.events.length === 0">
               <div class="tgk-modal-empty">
                 <div class="tgk-modal-empty__title">No activity yet</div>
                 <div class="tgk-modal-empty__text">No audit events are available yet.</div>
               </div>
             </template>
 
-            <div class="tgk-history-list" x-show="!envelopeHistoryModal.loading && !envelopeHistoryModal.error && envelopeHistoryModal.events.length > 0">
-              <template x-for="(evt, index) in envelopeHistoryModal.events" :key="index">
+            <div class="tgk-history-list" x-show="!transactionHistoryModal.loading && !transactionHistoryModal.error && transactionHistoryModal.events.length > 0">
+              <template x-for="(evt, index) in transactionHistoryModal.events" :key="index">
                 <div class="tgk-history-item">
                   <div class="tgk-history-item__dot"></div>
                   <div class="tgk-history-item__copy">
@@ -843,6 +881,6 @@ function mountSettingsPanel(element) {
   mountSharedTemplate(element, sharedSettingsTemplate());
 }
 
-function mountEnvelopeModals(element) {
-  mountSharedTemplate(element, sharedEnvelopeModalTemplate());
+function mountTransactionModals(element) {
+  mountSharedTemplate(element, sharedTransactionModalTemplate());
 }

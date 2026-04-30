@@ -65,7 +65,7 @@ function createResourceAccess(resourceKey) {
 setResourceAccess({
   customers: createResourceAccess('customers'),
   employees: createResourceAccess('employees'),
-  envelopes: createResourceAccess('envelopes'),
+  transactions: createResourceAccess('transactions'),
   tasks: createResourceAccess('tasks')
 });
 

@@ -42,8 +42,8 @@
   function buildCustomerDetailParams(options = {}) {
     const params = {};
 
-    if (options.includeEnvelopes) {
-      params.includeEnvelopes = 'true';
+    if (options.includeTransactions) {
+      params.includeTransactions = 'true';
     }
     if (options.includeTasks) {
       params.includeTasks = 'true';
@@ -94,15 +94,16 @@
     };
   }
 
-  function mapEnvelope(envelope) {
+  function mapTransaction(transaction) {
     return {
-      ...envelope,
-      employee_id: envelope?.employeeId || null,
-      customer_id: envelope?.customerId || null,
-      created_at: envelope?.createdAt || '',
-      updated_at: envelope?.updatedAt || '',
-      status: envelope?.status || 'created',
-      name: envelope?.name || ''
+      ...transaction,
+      employee_id: transaction?.employeeId || null,
+      customer_id: transaction?.customerId || null,
+      created_at: transaction?.createdAt || '',
+      updated_at: transaction?.updatedAt || '',
+      type: transaction?.type || 'envelope',
+      status: transaction?.status || 'created',
+      name: transaction?.name || ''
     };
   }
 
@@ -685,8 +686,8 @@
     deleteTaskRaw(id) {
       return this.del(this.withDataApp(getItemPath('/api/data/tasks', id)));
     },
-    getEnvelopesRaw(params) {
-      return this.get(this.withDataApp(withSearchParams('/api/data/envelopes', params)));
+    getTransactionsRaw(params) {
+      return this.get(this.withDataApp(withSearchParams('/api/data/transactions', params)));
     },
 
     async getCustomers(params) {
@@ -694,19 +695,19 @@
       return customers.map(mapCustomerToView);
     },
     async getCustomer(id, options = {}) {
-      const includeEnvelopes = options.includeEnvelopes !== false;
+      const includeTransactions = options.includeTransactions !== false;
       const includeTasks = options.includeTasks !== false;
       const customer = await this.getCustomerRaw(id, {
-        includeEnvelopes,
+        includeTransactions,
         includeTasks
       });
-      const envelopes = includeEnvelopes ? (customer.envelopes || []) : [];
+      const transactions = includeTransactions ? (customer.transactions || []) : [];
       const tasks = includeTasks ? (customer.tasks || []) : [];
 
       return {
         ...mapCustomerToView(customer),
         accounts: (customer.data?.accounts || []).map((account) => mapEmbeddedAccount(account, customer.id)),
-        envelopes: envelopes.map(mapEnvelope),
+        transactions: transactions.map(mapTransaction),
         tasks: tasks.map(mapTask)
       };
     },
@@ -721,9 +722,9 @@
       const tasks = await this.getTasksRaw(params);
       return tasks.map(mapTask);
     },
-    async getEnvelopes(params) {
-      const envelopes = await this.getEnvelopesRaw(params);
-      return envelopes.map(mapEnvelope);
+    async getTransactions(params) {
+      const transactions = await this.getTransactionsRaw(params);
+      return transactions.map(mapTransaction);
     },
     async createTask(body) {
       return mapTask(await this.createTaskRaw(body));

@@ -22,11 +22,12 @@ function account(id, name, accountType, value, ytdReturn, allocations, extra = {
   };
 }
 
-function envelope(id, employeeId, customerId, status, name) {
+function transaction(id, employeeId, customerId, type, status, name) {
   return {
     id,
     employeeId,
     customerId,
+    type,
     status,
     name
   };
@@ -175,13 +176,13 @@ const customers = [
   }
 ];
 
-const envelopes = [
-  envelope('6a0478f8-0d95-4a12-8e76-3fb7ca0a1011', employees[0].id, customers[0].id, 'completed', 'Account Opening Packet'),
-  envelope('6a0478f8-0d95-4a12-8e76-3fb7ca0a1012', employees[1].id, customers[1].id, 'sent', 'Transfer Authorization'),
-  envelope('6a0478f8-0d95-4a12-8e76-3fb7ca0a1013', employees[0].id, customers[0].id, 'completed', 'Beneficiary Update'),
-  envelope('6a0478f8-0d95-4a12-8e76-3fb7ca0a1014', employees[0].id, customers[2].id, 'delivered', 'ACAT Transfer Packet'),
-  envelope('6a0478f8-0d95-4a12-8e76-3fb7ca0a1015', employees[1].id, customers[3].id, 'completed', 'Wire Authorization Update'),
-  envelope('6a0478f8-0d95-4a12-8e76-3fb7ca0a1016', employees[1].id, customers[3].id, 'completed', 'Account Opening Packet')
+const transactions = [
+  transaction('6a0478f8-0d95-4a12-8e76-3fb7ca0a1011', employees[0].id, customers[0].id, 'envelope', 'completed', 'Account Opening Packet'),
+  transaction('6a0478f8-0d95-4a12-8e76-3fb7ca0a1012', employees[1].id, customers[1].id, 'envelope', 'sent', 'Transfer Authorization'),
+  transaction('6a0478f8-0d95-4a12-8e76-3fb7ca0a1013', employees[0].id, customers[0].id, 'envelope', 'completed', 'Beneficiary Update'),
+  transaction('6a0478f8-0d95-4a12-8e76-3fb7ca0a1014', employees[0].id, customers[2].id, 'envelope', 'delivered', 'ACAT Transfer Packet'),
+  transaction('6a0478f8-0d95-4a12-8e76-3fb7ca0a1015', employees[1].id, customers[3].id, 'envelope', 'completed', 'Wire Authorization Update'),
+  transaction('6a0478f8-0d95-4a12-8e76-3fb7ca0a1016', employees[1].id, customers[3].id, 'envelope', 'completed', 'Account Opening Packet')
 ];
 
 const tasks = customers.map(buildAssetTransferTask);
@@ -200,37 +201,32 @@ async function request(path, options = {}) {
   }
 
   if (!response.ok) {
-    throw new Error(`${response.status} ${path} ${JSON.stringify(payload)}`);
+    const error = new Error(`${response.status} ${path} ${JSON.stringify(payload)}`);
+    error.status = response.status;
+    error.path = path;
+    error.payload = payload;
+    throw error;
   }
 
   return payload;
 }
 
-async function resourceExists(path) {
-  const response = await fetch(`${BASE_URL}${path}`, {
-    headers: DEFAULT_HEADERS
-  });
-
-  if (response.status === 404) {
-    return false;
-  }
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`${response.status} ${path} ${text}`);
-  }
-
-  return true;
-}
-
 async function upsertRecord(collectionPath, record) {
   const itemPath = `${collectionPath}/${encodeURIComponent(record.id)}`;
 
-  if (await resourceExists(itemPath)) {
-    return request(itemPath, { method: 'PUT', body: JSON.stringify(record) });
+  try {
+    return await request(collectionPath, { method: 'POST', body: JSON.stringify(record) });
+  } catch (error) {
+    const message = String(error?.message || '');
+    const isDuplicate = error?.status === 409
+      || (error?.status === 500 && /UNIQUE constraint failed|constraint failed/i.test(message));
+
+    if (!isDuplicate) {
+      throw error;
+    }
   }
 
-  return request(collectionPath, { method: 'POST', body: JSON.stringify(record) });
+  return request(itemPath, { method: 'PUT', body: JSON.stringify(record) });
 }
 
 async function main() {
@@ -242,19 +238,19 @@ async function main() {
     await upsertRecord('/api/data/customers', customer);
   }
 
-  for (const envelopeRecord of envelopes) {
-    await upsertRecord('/api/data/envelopes', envelopeRecord);
+  for (const transactionRecord of transactions) {
+    await upsertRecord('/api/data/transactions', transactionRecord);
   }
 
   for (const taskRecord of tasks) {
     await upsertRecord('/api/data/tasks', taskRecord);
   }
 
-  const [seededEmployees, seededCustomers, seededTasks, seededEnvelopes] = await Promise.all([
+  const [seededEmployees, seededCustomers, seededTasks, seededTransactions] = await Promise.all([
     request('/api/data/employees'),
     request('/api/data/customers'),
     request('/api/data/tasks'),
-    request('/api/data/envelopes')
+    request('/api/data/transactions')
   ]);
 
   console.log(JSON.stringify({
@@ -263,7 +259,7 @@ async function main() {
     employees: seededEmployees.length,
     customers: seededCustomers.length,
     tasks: seededTasks.length,
-    envelopes: seededEnvelopes.length,
+    transactions: seededTransactions.length,
     totalAum: seededCustomers.reduce((sum, customer) => sum + Number(customer.data?.value || 0), 0)
   }, null, 2));
 }

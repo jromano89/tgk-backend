@@ -34,6 +34,14 @@ function agreementTypeForName(name) {
   return 'Other';
 }
 
+function agreementTypeForTransaction(transaction) {
+  return agreementTypeForName(transaction?.name);
+}
+
+function isEnvelopeTransaction(record) {
+  return String(record?.type || 'envelope').trim().toLowerCase() === 'envelope';
+}
+
 function getInitialAdvisorView() {
   const view = new URL(window.location.href).searchParams.get('view');
   return String(view || 'dashboard').trim() || 'dashboard';
@@ -59,13 +67,13 @@ function advisorApp() {
         'Launching the embedded experience'
       ]
     }),
-    ...createEnvelopeModalHelpers(),
+    ...createTransactionModalHelpers(),
     view: 'dashboard',
     currentUser: null,
     customers: [],
     selectedContact: null,
     selectedContactAccounts: [],
-    selectedContactEnvelopes: [],
+    selectedContactTransactions: [],
     _clientDetailEventsSubscription: null,
     _clientDetailEventsTimeout: null,
     searchQuery: '',
@@ -149,7 +157,7 @@ function advisorApp() {
 
     get agreementTypeBreakdown() {
       const counts = this.allAgreements.reduce((map, agreement) => {
-        const type = agreementTypeForName(agreement?.name);
+        const type = agreementTypeForTransaction(agreement);
         map.set(type, (map.get(type) || 0) + 1);
         return map;
       }, new Map());
@@ -202,7 +210,8 @@ function advisorApp() {
 
       this.agreementsLoading = true;
       try {
-        this.allAgreements = await TGK_API.getEnvelopes();
+        const transactions = await TGK_API.getTransactions();
+        this.allAgreements = transactions.filter(isEnvelopeTransaction);
         this.agreementsLoaded = true;
       } catch (error) {
         console.error('Failed to load agreements:', error);
@@ -228,6 +237,7 @@ function advisorApp() {
         return [
           agreement.name,
           agreement.id,
+          agreement.type,
           agreement.status,
           investor
         ].some((value) => String(value || '').toLowerCase().includes(query));
@@ -249,10 +259,10 @@ function advisorApp() {
         this.selectedContact = detail;
         TGK_API.setPreferredCustomerId(detail.id);
         this.selectedContactAccounts = detail.accounts || [];
-        this.selectedContactEnvelopes = detail.envelopes || [];
+        this.selectedContactTransactions = (detail.transactions || []).filter(isEnvelopeTransaction);
       } catch (e) {
         this.selectedContactAccounts = [];
-        this.selectedContactEnvelopes = [];
+        this.selectedContactTransactions = [];
       }
       this.setView('client');
       this.startClientDetailEvents(contact.id);
@@ -297,10 +307,10 @@ function advisorApp() {
         const detail = await TGK_API.getCustomer(contactId, { includeTasks: false });
         this.selectedContact = detail;
         this.selectedContactAccounts = detail.accounts || [];
-        this.selectedContactEnvelopes = detail.envelopes || [];
+        this.selectedContactTransactions = (detail.transactions || []).filter(isEnvelopeTransaction);
         const idx = this.customers.findIndex(c => c.id === contactId);
         if (idx !== -1) {
-          this.customers[idx] = { ...this.customers[idx], ...detail, accounts: undefined, envelopes: undefined };
+          this.customers[idx] = { ...this.customers[idx], ...detail, accounts: undefined, transactions: undefined };
         }
         if (normalizeStatusValue(detail.metadata?.status) === 'active') {
           this.stopClientDetailEvents();
@@ -340,7 +350,7 @@ function advisorApp() {
       this.setView('dashboard');
       this.selectedContact = null;
       this.selectedContactAccounts = [];
-      this.selectedContactEnvelopes = [];
+      this.selectedContactTransactions = [];
     },
 
     resetOnboardingState() {

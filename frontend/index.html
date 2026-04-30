@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TGK Demo Generator</title>
-  <meta name="description" content="Docusign-branded story demo launcher for the TGK live advisor and investor experiences.">
+  <title>TGK Wealth Portal Launcher</title>
+  <meta name="description" content="Financial services demo launcher for Advisor and Investor IAM workflows.">
   <meta name="theme-color" content="#18003d">
   <link rel="icon" href="shared/favicon.ico" sizes="any">
   <link rel="stylesheet" href="shared/styles/tgk-brand.css?v=20260407-1">
-  <link rel="stylesheet" href="shared/styles/tgk-launcher.css?v=20260407-1">
+  <link rel="stylesheet" href="shared/styles/tgk-launcher.css?v=20260430-3">
   <script defer src="config.js?v=20260409-1"></script>
-  <script defer src="shared/js/tgk-launcher.js?v=20260409-3"></script>
+  <script defer src="shared/js/tgk-launcher.js?v=20260430-2"></script>
 </head>
 <body>
   <main class="page-shell">
@@ -22,112 +22,72 @@
           </div>
 
           <div class="hero-copy-block">
-            <div class="hero-kicker">TGK Demo Generator</div>
-            <h1>
-              <span class="hero-accent-iam">IAM</span> Story Demo Experience
-            </h1>
-            <p id="hero-copy">
-              Select vertical and workflow to launch the demo.
+            <div class="hero-kicker">TGK Wealth</div>
+            <h1>Docusign IAM for Financial Services</h1>
+            <p>
+              Explore two production-style workflows powered by Docusign IAM.
             </p>
           </div>
         </div>
       </section>
 
-      <section class="configurator">
-        <section class="configurator-section" data-group="vertical">
-          <p class="section-label">Select Vertical</p>
-          <div class="option-grid" data-columns="3">
-            <button class="option-card" type="button" data-option="vertical" data-value="banking">
-              <span class="card-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none">
-                  <path d="M4 10.5 12 6l8 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M5.5 10.5h13M7.5 10.5v6M12 10.5v6M16.5 10.5v6M4.5 18.5h15" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                  <circle cx="12" cy="4.5" r="1.5" fill="#FF5252"/>
-                </svg>
-              </span>
-              <span class="card-copy">
-                <span class="card-title">Banking / CU</span>
-                <span class="card-subtitle">Retail &amp; commercial</span>
-              </span>
-            </button>
+      <section class="mode-panel" aria-label="Experience mode">
+        <label class="mode-toggle" for="global-advanced-toggle">
+          <span class="mode-chip">Normal</span>
+          <input id="global-advanced-toggle" type="checkbox" role="switch" aria-label="Enable advanced mode">
+          <span class="toggle-track" aria-hidden="true">
+            <span class="toggle-thumb"></span>
+          </span>
+          <span class="mode-chip">Advanced</span>
+        </label>
+      </section>
 
-            <button class="option-card is-selected" type="button" data-option="vertical" data-value="wealth" aria-pressed="true">
-              <span class="card-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none">
-                  <path d="M6 17.5h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                  <path d="M7 15V9.5M12 15V6.5M17 15V11.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                  <path d="m7 9.5 4-3 3 2 3-4" stroke="#FF5252" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </span>
-              <span class="card-copy">
-                <span class="card-title">Wealth Management</span>
-                <span class="card-subtitle">Advisors &amp; investors</span>
-              </span>
-            </button>
-
-            <button class="option-card" type="button" data-option="vertical" data-value="insurance">
-              <span class="card-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none">
-                  <path d="M12 4 18 6v5.5c0 4.2-2.3 6.9-6 8.5-3.7-1.6-6-4.3-6-8.5V6l6-2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
-                  <path d="M12 8.2v7.2" stroke="#FF5252" stroke-width="1.6" stroke-linecap="round"/>
-                </svg>
-              </span>
-              <span class="card-copy">
-                <span class="card-title">Insurance</span>
-                <span class="card-subtitle">Carriers &amp; agents</span>
-              </span>
-            </button>
-          </div>
-        </section>
-
-        <section class="configurator-section" data-group="workflow">
-          <p class="section-label">Select Core Workflow</p>
-          <div class="option-grid" data-columns="2">
-            <button class="option-card is-selected" type="button" data-option="workflow" data-value="onboarding" aria-pressed="true">
-              <span class="card-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="8" r="3.2" stroke="currentColor" stroke-width="1.6"/>
-                  <path d="M6.5 18c1.3-3.1 3.4-4.6 5.5-4.6s4.2 1.5 5.5 4.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                </svg>
-              </span>
-              <span class="card-copy">
-                <span class="card-title">Account Onboarding</span>
-                <span class="card-subtitle">New account opening, KYC, forms</span>
-              </span>
-            </button>
-
-            <button class="option-card" type="button" data-option="workflow" data-value="maintenance">
-              <span class="card-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none">
-                  <path d="m9.1 7.4 7.5 7.5M7.3 16.7l3.4-3.4M13.1 10.9l3.4-3.4M4.8 19.2l2.1-2.1M17 6.7l2.2-2.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                  <path d="M13.7 6.5 17.5 10.3" stroke="#FF5252" stroke-width="1.6" stroke-linecap="round"/>
-                </svg>
-              </span>
-              <span class="card-copy">
-                <span class="card-title">Account Maintenance</span>
-                <span class="card-subtitle">Address changes, beneficiaries, transfers</span>
-              </span>
-            </button>
-          </div>
-        </section>
-
-        <section class="launch-panel">
-          <a id="generate-demo-link" class="launch-cta" href="scenes/wealth/account-onboarding/?scene=problem">
-            <span id="generate-demo-label">Generate Story Demo -&gt;</span>
-          </a>
-
-          <div class="footer-meta">
-            <div class="footer-note"><a id="backend-service-link" href="#">90% reusable backend</a> • Front-end shell adapts per vertical</div>
-            <div class="footer-links">
-              <a href="https://sites.google.com/docusign.com/tgk-part-deux/disco">Interactive discovery tool</a>
-              <span class="footer-separator" aria-hidden="true">•</span>
-              <a id="configurable-portal-link" href="advisor/?mode=advanced">SC configurable portal</a>
+      <section class="launcher-panel" aria-label="Portal selection">
+        <a id="advisor-tile-link" class="portal-tile" href="advisor/?mode=advanced" aria-labelledby="advisor-title advisor-focus">
+          <div class="portal-head">
+            <div class="portal-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="7.5" r="3" stroke="currentColor" stroke-width="1.6"/>
+                <path d="M5.5 18c1.2-2.8 3.2-4.2 6.5-4.2s5.3 1.4 6.5 4.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                <path d="M16.2 8.4h2.3M17.3 7.2v2.3" stroke="#FF5252" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
             </div>
+            <h2 id="advisor-title">Advisor Portal</h2>
           </div>
-        </section>
+          <p id="advisor-focus" class="portal-focus">Focus: New account opening workflow</p>
+          <span class="tile-cta">
+            Enter portal
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <path d="M5 10h10M11 6l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </a>
+
+        <a id="investor-tile-link" class="portal-tile" href="investor/?mode=advanced" aria-labelledby="investor-title investor-focus">
+          <div class="portal-head">
+            <div class="portal-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M5 16.5h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                <path d="M7.5 14v-3.2M12 14V7.2M16.5 14v-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                <path d="m7.5 10.8 3.5-2.6 2.8 1.8 2.7-3.7" stroke="#FF5252" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <h2 id="investor-title">Investor Portal</h2>
+          </div>
+          <p id="investor-focus" class="portal-focus">Focus: Account maintenance transactions</p>
+          <span class="tile-cta">
+            Enter portal
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <path d="M5 10h10M11 6l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </a>
+      </section>
+
+      <section class="footer-meta">
+        <div class="footer-note"><a id="backend-service-link" href="#">Shared modular backend service</a></div>
       </section>
     </div>
   </main>
-
 </body>
 </html>

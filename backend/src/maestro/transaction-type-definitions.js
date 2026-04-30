@@ -1,20 +1,21 @@
 const { createConceptTypeDefinitions } = require('./type-helpers');
 
-const TYPE_NAME = 'Envelope';
-const TYPE_ALIASES = new Set(['envelope', 'document', 'agreement']);
+const TYPE_NAME = 'Transaction';
+const TYPE_ALIASES = new Set(['transaction']);
 
 const TYPE_NAMES = [
   {
     typeName: TYPE_NAME,
-    label: 'Envelope',
-    description: 'Docusign envelope tracking row'
+    label: 'Transaction',
+    description: 'Transaction tracking row'
   }
 ];
 
 const FIELD_DEFINITIONS = [
-  { name: 'EnvelopeId', label: 'Envelope ID', type: 'String', optional: false },
+  { name: 'TransactionId', label: 'Transaction ID', type: 'String', optional: false },
   { name: 'AppSlug', label: 'App Slug', type: 'String', optional: false },
-  { name: 'Name', label: 'Envelope Name', type: 'String', optional: true },
+  { name: 'Name', label: 'Transaction Name', type: 'String', optional: true },
+  { name: 'Type', label: 'Transaction Type', type: 'String', optional: true },
   { name: 'Status', label: 'Status', type: 'String', optional: true },
   { name: 'CustomerId', label: 'Customer ID', type: 'String', optional: true },
   { name: 'EmployeeId', label: 'Employee ID', type: 'String', optional: true },
@@ -25,8 +26,8 @@ const FIELD_DEFINITIONS = [
 
 const TYPE_DEFINITIONS = createConceptTypeDefinitions({
   typeName: TYPE_NAME,
-  term: 'Envelope',
-  identifiedBy: 'EnvelopeId',
+  term: 'Transaction',
+  identifiedBy: 'TransactionId',
   fields: FIELD_DEFINITIONS
 });
 

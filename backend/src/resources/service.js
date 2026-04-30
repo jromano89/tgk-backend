@@ -184,15 +184,20 @@ function normalizeCustomerWrite({ db, appSlug, existingRecord, input = {} }) {
   };
 }
 
-function normalizeEnvelopeWrite({ db, appSlug, existingRecord, input = {} }) {
+function normalizeTransactionWrite({ db, appSlug, existingRecord, input = {} }) {
+  const isCreate = !existingRecord;
+
   return {
-    id: existingRecord?.id || normalizeRequiredText(input.id, 'envelope id'),
+    id: existingRecord?.id || normalizeRequiredText(input.id, 'transaction id'),
     employee_id: input.employeeId !== undefined
       ? resolveReference(db, appSlug, input.employeeId, 'employees', 'employeeId')
       : undefined,
     customer_id: input.customerId !== undefined
       ? resolveReference(db, appSlug, input.customerId, 'customers', 'customerId')
       : undefined,
+    type: input.type !== undefined
+      ? (normalizeOptionalString(input.type) || 'envelope')
+      : (isCreate ? 'envelope' : undefined),
     status: input.status !== undefined ? normalizeOptionalString(input.status) : undefined,
     name: input.name !== undefined ? normalizeOptionalString(input.name) : undefined,
     data: mergeData(existingRecord?.data, input.data),
@@ -246,19 +251,20 @@ const RESOURCE_DEFINITIONS = {
     normalizeWrite: normalizeCustomerWrite,
     allowDelete: true,
     beforeDelete(db, appSlug, recordId) {
-      db.prepare('UPDATE envelopes SET customer_id = NULL, updated_at = CURRENT_TIMESTAMP WHERE app_slug = ? AND customer_id = ?').run(appSlug, recordId);
+      db.prepare('UPDATE transactions SET customer_id = NULL, updated_at = CURRENT_TIMESTAMP WHERE app_slug = ? AND customer_id = ?').run(appSlug, recordId);
       db.prepare('UPDATE tasks SET customer_id = NULL, updated_at = CURRENT_TIMESTAMP WHERE app_slug = ? AND customer_id = ?').run(appSlug, recordId);
     }
   },
-  envelopes: {
-    table: 'envelopes',
-    label: 'Envelope',
-    columns: ['employee_id', 'customer_id', 'status', 'name', 'data'],
+  transactions: {
+    table: 'transactions',
+    label: 'Transaction',
+    columns: ['employee_id', 'customer_id', 'type', 'status', 'name', 'data'],
     orderBy: 'created_at DESC',
     buildListOptions(filters = {}) {
       return combineListOptions(
         buildEqualityFilters(filters, {
           id: 'id',
+          type: 'type',
           status: 'status',
           employeeId: 'employee_id',
           customerId: 'customer_id'
@@ -266,7 +272,7 @@ const RESOURCE_DEFINITIONS = {
         buildTextSearch(['name', 'id'], filters.search)
       );
     },
-    normalizeWrite: normalizeEnvelopeWrite
+    normalizeWrite: normalizeTransactionWrite
   },
   tasks: {
     table: 'tasks',
@@ -303,8 +309,8 @@ function isTruthyQueryValue(value) {
 }
 
 function attachCustomerIncludes(db, appSlug, recordId, record, query = {}) {
-  if (isTruthyQueryValue(query.includeEnvelopes)) {
-    record.envelopes = listRecordsForApp(db, appSlug, 'envelopes', { customerId: recordId });
+  if (isTruthyQueryValue(query.includeTransactions)) {
+    record.transactions = listRecordsForApp(db, appSlug, 'transactions', { customerId: recordId });
   }
 
   if (isTruthyQueryValue(query.includeTasks)) {

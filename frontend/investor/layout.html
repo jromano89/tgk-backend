@@ -228,38 +228,42 @@
               <p class="tgk-panel-copy">Signed packets and live status updates in one place.</p>
             </div>
           </div>
-          <template x-if="envelopes.length === 0">
+          <template x-if="transactions.length === 0">
             <div class="tgk-empty-panel tgk-empty-panel--compact">
               <div class="tgk-empty-panel__icon">
                 <svg class="tgk-icon tgk-icon--lg tgk-icon--muted" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
               </div>
               <p class="tgk-empty-panel__title">No documents yet</p>
-              <p class="tgk-empty-panel__copy">Agreement packets will appear here as they are sent and completed.</p>
+              <p class="tgk-empty-panel__copy">Documents will appear here as they are created and completed.</p>
             </div>
           </template>
           <div class="tgk-record-list">
-            <template x-for="env in envelopes" :key="env.id">
+            <template x-for="env in transactions" :key="env.id">
               <div class="tgk-record-row">
                 <div class="tgk-record-row__main">
                   <div class="tgk-record-row__content">
                     <div class="tgk-record-row__title" x-text="env.name || 'Untitled'"></div>
                     <div class="tgk-record-row__meta">
                       <span class="tgk-record-row__id" x-text="env.id || ''"></span>
-                      <template x-if="envelopeTimestampLabel(env)">
+                      <template x-if="transactionTimestampLabel(env)">
                         <span class="u-row u-gap-2">
                           <span class="tgk-record-row__meta-dot"></span>
-                          <span x-text="envelopeTimestampLabel(env)"></span>
+                          <span x-text="transactionTimestampLabel(env)"></span>
                         </span>
                       </template>
                     </div>
                   </div>
                   <div class="tgk-record-row__actions">
-                    <button @click="viewEnvelopeDoc(env)" class="tgk-icon-button" title="View document">
-                      <svg class="tgk-icon tgk-icon--md" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-                    </button>
-                    <button @click="viewEnvelopeHistory(env)" class="tgk-icon-button" title="View history">
-                      <svg class="tgk-icon tgk-icon--md" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    </button>
+                    <template x-if="String(env.type || '').trim().toLowerCase() === 'envelope'">
+                      <div class="u-row u-gap-2">
+                        <button @click="viewTransactionDoc(env)" class="tgk-icon-button" title="View document">
+                          <svg class="tgk-icon tgk-icon--md" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                        </button>
+                        <button @click="viewTransactionHistory(env)" class="tgk-icon-button" title="View history">
+                          <svg class="tgk-icon tgk-icon--md" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </button>
+                      </div>
+                    </template>
                   </div>
                 </div>
                 <span class="tgk-status-badge" :class="statusClasses(env.status)" x-text="env.status || 'unknown'"></span>
@@ -393,5 +397,5 @@
     </div>
   </template>
 
-  <div x-init="mountEnvelopeModals($el)"></div>
+  <div x-init="mountTransactionModals($el)"></div>
 </div>

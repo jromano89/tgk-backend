@@ -143,28 +143,29 @@ function buildApiSpec({ title, version, req }) {
             idPathParam(),
             appQueryParam(),
             appHeaderParam(),
-            optionalQueryParam('includeEnvelopes', 'Include related envelopes when truthy.'),
+            optionalQueryParam('includeTransactions', 'Include related transactions when truthy.'),
             optionalQueryParam('includeTasks', 'Include related tasks when truthy.')
           ]
         },
         put: updateOperation('customers', 'Update customer', '#/components/schemas/CustomerInput', '#/components/schemas/Customer'),
         delete: deleteOperation('customers', 'Delete customer')
       },
-      '/api/data/envelopes': {
-        get: listOperation('envelopes', 'List envelopes', '#/components/schemas/Envelope', [
+      '/api/data/transactions': {
+        get: listOperation('transactions', 'List transactions', '#/components/schemas/Transaction', [
           appQueryParam(),
           appHeaderParam(),
-          optionalQueryParam('id', 'Filter by envelope id.'),
+          optionalQueryParam('id', 'Filter by transaction id.'),
+          optionalQueryParam('type', 'Filter by transaction type.'),
           optionalQueryParam('status', 'Filter by status.'),
           optionalQueryParam('employeeId', 'Filter by employee id.'),
           optionalQueryParam('customerId', 'Filter by customer id.'),
           optionalQueryParam('search', 'Text search.')
         ]),
-        post: createOperation('envelopes', 'Create envelope', '#/components/schemas/EnvelopeInput', '#/components/schemas/Envelope')
+        post: createOperation('transactions', 'Create transaction', '#/components/schemas/TransactionInput', '#/components/schemas/Transaction')
       },
-      '/api/data/envelopes/{id}': {
-        get: getOperation('envelopes', 'Get envelope', '#/components/schemas/Envelope'),
-        put: updateOperation('envelopes', 'Update envelope', '#/components/schemas/EnvelopeInput', '#/components/schemas/Envelope')
+      '/api/data/transactions/{id}': {
+        get: getOperation('transactions', 'Get transaction', '#/components/schemas/Transaction'),
+        put: updateOperation('transactions', 'Update transaction', '#/components/schemas/TransactionInput', '#/components/schemas/Transaction')
       },
       '/api/data/tasks': {
         get: listOperation('tasks', 'List tasks', '#/components/schemas/Task', [
@@ -328,7 +329,7 @@ function buildApiSpec({ title, version, req }) {
           data: genericObjectSchema(),
           createdAt: { type: 'string', format: 'date-time' },
           updatedAt: { type: 'string', format: 'date-time' },
-          envelopes: { type: 'array', items: { $ref: '#/components/schemas/Envelope' } },
+          transactions: { type: 'array', items: { $ref: '#/components/schemas/Transaction' } },
           tasks: { type: 'array', items: { $ref: '#/components/schemas/Task' } }
         }),
         CustomerInput: inputSchema({
@@ -343,20 +344,22 @@ function buildApiSpec({ title, version, req }) {
           createdAt: { type: 'string', format: 'date-time' },
           appSlug: { type: 'string' }
         }),
-        Envelope: resourceSchema({
+        Transaction: resourceSchema({
           id: { type: 'string' },
           employeeId: { type: 'string' },
           customerId: { type: 'string' },
+          type: { type: 'string' },
           status: { type: 'string' },
           name: { type: 'string' },
           data: genericObjectSchema(),
           createdAt: { type: 'string', format: 'date-time' },
           updatedAt: { type: 'string', format: 'date-time' }
         }),
-        EnvelopeInput: inputSchema({
+        TransactionInput: inputSchema({
           id: { type: 'string' },
           employeeId: { type: 'string' },
           customerId: { type: 'string' },
+          type: { type: 'string' },
           status: { type: 'string' },
           name: { type: 'string' },
           data: genericObjectSchema(),
@@ -489,10 +492,10 @@ function buildDocsHtml({ title, version, req }) {
         ['GET', '/api/data/customers/{id}', 'Get customer'],
         ['PUT', '/api/data/customers/{id}', 'Update customer'],
         ['DELETE', '/api/data/customers/{id}', 'Delete customer'],
-        ['GET', '/api/data/envelopes', 'List envelopes'],
-        ['POST', '/api/data/envelopes', 'Create envelope'],
-        ['GET', '/api/data/envelopes/{id}', 'Get envelope'],
-        ['PUT', '/api/data/envelopes/{id}', 'Update envelope'],
+        ['GET', '/api/data/transactions', 'List transactions'],
+        ['POST', '/api/data/transactions', 'Create transaction'],
+        ['GET', '/api/data/transactions/{id}', 'Get transaction'],
+        ['PUT', '/api/data/transactions/{id}', 'Update transaction'],
         ['GET', '/api/data/tasks', 'List tasks'],
         ['POST', '/api/data/tasks', 'Create task'],
         ['GET', '/api/data/tasks/{id}', 'Get task'],

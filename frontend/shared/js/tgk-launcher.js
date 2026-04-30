@@ -1,149 +1,71 @@
 (function () {
-  const HERO_COPY = 'Select vertical and workflow to launch the demo.';
-  const defaults = {
-    vertical: 'wealth',
-    workflow: 'onboarding'
+  const MODE_NORMAL = 'normal';
+  const MODE_ADVANCED = 'advanced';
+
+  const portals = {
+    advisor: { path: 'advisor/' },
+    investor: { path: 'investor/' }
   };
 
-  const verticals = {
-    banking: true,
-    wealth: true,
-    insurance: true
-  };
-
-  const workflows = {
-    onboarding: true,
-    maintenance: true
-  };
-
-  const portalTargets = {
-    onboarding: {
-      path: 'advisor/',
-      launchLabel: 'Launch Advisor Portal ->'
-    },
-    maintenance: {
-      path: 'investor/',
-      launchLabel: 'Launch Investor Portal ->'
-    }
-  };
-
-  const scenarioOverrides = {
-    wealth: {
-      onboarding: {
-        path: 'scenes/wealth/account-onboarding/',
-        label: 'Generate Story Demo ->',
-        params: {
-          scene: 'problem'
-        }
-      }
-    }
-  };
-
-  function readStateValue(name, options, fallback) {
-    const value = new URL(window.location.href).searchParams.get(name);
-    return Object.prototype.hasOwnProperty.call(options, value) ? value : fallback;
+  function normalizeMode(value, fallback) {
+    const normalized = String(value || fallback || '').trim().toLowerCase();
+    return normalized === MODE_NORMAL ? MODE_NORMAL : MODE_ADVANCED;
   }
 
-  function setSelectedOption(name, value) {
-    document.querySelectorAll(`[data-option="${name}"]`).forEach((button) => {
-      const isSelected = button.dataset.value === value;
-      button.classList.toggle('is-selected', isSelected);
-      button.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
-    });
-  }
-
-  function buildHref(pathname, extraParams = {}) {
+  function buildHref(pathname, mode) {
     const url = new URL(pathname, window.location.href);
-
-    Object.entries(extraParams).forEach(([key, value]) => {
-      if (value == null || value === '') {
-        return;
-      }
-      url.searchParams.set(key, value);
-    });
-
+    url.searchParams.set('mode', mode);
     return `${url.pathname}${url.search}`;
   }
 
-  function syncUrl(state) {
+  function readInitialMode() {
+    const params = new URL(window.location.href).searchParams;
+    const configuredDefault = normalizeMode(window.TGK_CONFIG?.defaultMode, MODE_ADVANCED);
+    return normalizeMode(params.get('mode'), configuredDefault);
+  }
+
+  function syncUrl(mode) {
     const currentUrl = new URL(window.location.href);
-    currentUrl.searchParams.set('vertical', state.vertical);
-    currentUrl.searchParams.set('workflow', state.workflow);
+    currentUrl.searchParams.set('mode', mode);
     window.history.replaceState({}, '', `${currentUrl.pathname}${currentUrl.search}`);
   }
 
-  function getPortalTarget(workflow) {
-    return portalTargets[workflow] || portalTargets[defaults.workflow];
-  }
-
-  function getPrimaryScenario(state) {
-    const override = scenarioOverrides[state.vertical]?.[state.workflow];
-    if (override) {
-      return override;
-    }
-
-    const portalTarget = getPortalTarget(state.workflow);
-    return {
-      path: portalTarget.path,
-      label: portalTarget.launchLabel,
-      params: {
-        mode: 'normal'
-      }
-    };
-  }
-
-  function getConfigurableScenario(state) {
-    const portalTarget = getPortalTarget(state.workflow);
-    return {
-      path: portalTarget.path,
-      params: {
-        mode: 'advanced'
-      }
-    };
-  }
-
   function bootLauncher() {
-    const heroCopy = document.getElementById('hero-copy');
-    const generateLink = document.getElementById('generate-demo-link');
-    const generateLabel = document.getElementById('generate-demo-label');
-    const configurablePortalLink = document.getElementById('configurable-portal-link');
+    const modeToggle = document.getElementById('global-advanced-toggle');
     const backendServiceLink = document.getElementById('backend-service-link');
 
-    if (!heroCopy || !generateLink || !generateLabel || !configurablePortalLink || !backendServiceLink) {
+    if (!modeToggle) {
       return;
     }
 
     const state = {
-      vertical: readStateValue('vertical', verticals, defaults.vertical),
-      workflow: readStateValue('workflow', workflows, defaults.workflow)
+      mode: readInitialMode()
     };
 
     function render() {
-      const primaryScenario = getPrimaryScenario(state);
-      const configurableScenario = getConfigurableScenario(state);
+      const isAdvanced = state.mode === MODE_ADVANCED;
+      modeToggle.checked = isAdvanced;
 
-      setSelectedOption('vertical', state.vertical);
-      setSelectedOption('workflow', state.workflow);
-
-      heroCopy.textContent = HERO_COPY;
-      generateLabel.textContent = primaryScenario.label;
-      generateLink.href = buildHref(primaryScenario.path, primaryScenario.params);
-      configurablePortalLink.href = buildHref(configurableScenario.path, configurableScenario.params);
-      backendServiceLink.href = window.TGK_CONFIG?.backendUrl || '#';
-      syncUrl(state);
-    }
-
-    document.querySelectorAll('[data-option]').forEach((button) => {
-      button.addEventListener('click', () => {
-        const { option, value } = button.dataset;
-        if (!option || !value) {
+      Object.keys(portals).forEach((portalKey) => {
+        const link = document.getElementById(`${portalKey}-tile-link`);
+        if (!link) {
           return;
         }
-
-        state[option] = value;
-        render();
+        link.href = buildHref(portals[portalKey].path, state.mode);
       });
+
+      document.body.dataset.mode = state.mode;
+      syncUrl(state.mode);
+    }
+
+    modeToggle.addEventListener('change', () => {
+      state.mode = modeToggle.checked ? MODE_ADVANCED : MODE_NORMAL;
+      render();
     });
+
+    if (backendServiceLink) {
+      backendServiceLink.href = window.TGK_CONFIG?.backendUrl || '#';
+    }
 
     render();
   }

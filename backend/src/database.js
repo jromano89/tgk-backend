@@ -37,13 +37,14 @@ const TABLE_DEFINITIONS = {
       )
     `
   },
-  envelopes: {
+  transactions: {
     createSql: `
-      CREATE TABLE IF NOT EXISTS envelopes (
+      CREATE TABLE IF NOT EXISTS transactions (
         id TEXT PRIMARY KEY,
         app_slug TEXT NOT NULL,
         employee_id TEXT REFERENCES employees(id) ON DELETE SET NULL,
         customer_id TEXT REFERENCES customers(id) ON DELETE SET NULL,
+        type TEXT DEFAULT 'envelope',
         status TEXT DEFAULT 'created',
         name TEXT,
         data TEXT,
@@ -76,9 +77,10 @@ const INDEX_SCHEMA = `
   CREATE INDEX IF NOT EXISTS idx_customers_app_slug ON customers(app_slug);
   CREATE INDEX IF NOT EXISTS idx_customers_app_slug_status ON customers(app_slug, status);
   CREATE INDEX IF NOT EXISTS idx_customers_app_slug_employee ON customers(app_slug, employee_id);
-  CREATE INDEX IF NOT EXISTS idx_envelopes_app_slug ON envelopes(app_slug);
-  CREATE INDEX IF NOT EXISTS idx_envelopes_app_slug_customer ON envelopes(app_slug, customer_id);
-  CREATE INDEX IF NOT EXISTS idx_envelopes_app_slug_employee ON envelopes(app_slug, employee_id);
+  CREATE INDEX IF NOT EXISTS idx_transactions_app_slug ON transactions(app_slug);
+  CREATE INDEX IF NOT EXISTS idx_transactions_app_slug_customer ON transactions(app_slug, customer_id);
+  CREATE INDEX IF NOT EXISTS idx_transactions_app_slug_employee ON transactions(app_slug, employee_id);
+  CREATE INDEX IF NOT EXISTS idx_transactions_app_slug_type ON transactions(app_slug, type);
   CREATE INDEX IF NOT EXISTS idx_tasks_app_slug ON tasks(app_slug);
   CREATE INDEX IF NOT EXISTS idx_tasks_app_slug_customer ON tasks(app_slug, customer_id);
   CREATE INDEX IF NOT EXISTS idx_tasks_app_slug_employee ON tasks(app_slug, employee_id);
