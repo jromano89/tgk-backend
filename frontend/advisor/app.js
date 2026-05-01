@@ -385,6 +385,21 @@ function advisorApp() {
       this._maestroKnownContactIds = new Set((customers || []).map((customer) => customer.id));
     },
 
+    async startMaestroCustomerTracking() {
+      if (this._maestroTrackingStarted || this.maestroCompleted) {
+        return;
+      }
+
+      this._maestroTrackingStarted = true;
+      await this.snapshotMaestroCustomers();
+      if (!this.showOnboarding || this.maestroCompleted) {
+        return;
+      }
+
+      this.startMaestroCreationEvents();
+      void this.checkForNewMaestroCustomer();
+    },
+
     async refreshContactsAfterOnboarding(targetId) {
       try {
         const customers = await TGK_API.getCustomers();
@@ -396,15 +411,15 @@ function advisorApp() {
     },
 
     async handleOnboardingFrameLoad() {
-      if (this._maestroTrackingStarted || this.maestroCompleted || this.maestroError) {
+      if (this.maestroCompleted || this.maestroError) {
         return;
       }
-      this._maestroTrackingStarted = true;
-      await this.snapshotMaestroCustomers();
-      if (!this.showOnboarding || this.maestroCompleted) {
-        return;
+
+      if (!this._maestroTrackingStarted) {
+        await this.startMaestroCustomerTracking();
+      } else {
+        void this.checkForNewMaestroCustomer();
       }
-      this.startMaestroCreationEvents();
     },
 
     findNewMaestroCustomer(extensionCustomers) {
@@ -485,16 +500,15 @@ function advisorApp() {
     },
 
     async loadMaestroWorkflow() {
-      this.stopMaestroCreationEvents();
       this.clearOnboardingRedirectTimer();
-      this._maestroTrackingStarted = false;
-      this._maestroKnownContactIds = new Set();
       this.maestroLoading = true;
       this.maestroError = null;
       this.maestroInstanceUrl = '';
       this.startWorkflowLoading();
 
       try {
+        await this.startMaestroCustomerTracking();
+
         const workflowId = this.getAccountOpeningWorkflowId();
         if (!workflowId) {
           throw new Error('No account opening workflow is configured.');
