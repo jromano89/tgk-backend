@@ -82,7 +82,7 @@
               <input x-model="searchQuery" type="text" placeholder="Search clients" class="tgk-form-input tgk-search-field__input">
             </label>
             <div x-data x-init="mountSharedTemplate($el, newsPanelTemplate())"></div>
-            <button @click="openOnboarding()" class="tgk-button tgk-button--primary">Open Account</button>
+            <button @click="openOnboarding()" class="tgk-button tgk-button--primary">Add New Client</button>
           </div>
         </div>
 
@@ -475,8 +475,8 @@
               <div class="tgk-workflow-shell tgk-workflow-shell--top">
                 <div class="tgk-workflow-state">
                   <div class="tgk-pill tgk-pill--brand">Docusign IAM</div>
-                  <h3 class="tgk-workflow-title">Preparing account opening</h3>
-                  <p class="tgk-workflow-copy">Starting the embedded onboarding experience for a new investor. The form will collect the required investor details directly in Docusign.</p>
+                  <h3 class="tgk-workflow-title">Preparing new client setup</h3>
+                  <p class="tgk-workflow-copy">Starting the embedded experience to add a new client. The form will collect the required client details directly in Docusign.</p>
 
                   <div class="tgk-workflow-progress">
                     <div
@@ -499,7 +499,7 @@
             <template x-if="!maestroLoading && maestroError">
               <div class="tgk-workflow-shell">
                 <div class="tgk-workflow-state tgk-workflow-state--error">
-                  <h3 class="tgk-workflow-title">Unable to launch account opening</h3>
+                  <h3 class="tgk-workflow-title">Unable to add new client</h3>
                   <p class="tgk-workflow-copy" x-text="maestroError"></p>
                   <p class="tgk-workflow-copy">If this is a consent issue, reconnect Docusign so the app can request the <code>aow_manage</code> scope.</p>
                   <div class="tgk-workflow-actions">
@@ -515,7 +515,7 @@
                 class="tgk-modal-frame"
                 :src="maestroInstanceUrl"
                 @load="handleOnboardingFrameLoad()"
-                title="Docusign IAM Account Opening"
+                title="Docusign IAM Add New Client"
                 referrerpolicy="strict-origin-when-cross-origin"
                 allow="clipboard-write; fullscreen">
               </iframe>
@@ -529,7 +529,7 @@
                       <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                     </svg>
                   </div>
-                  <h3 class="tgk-workflow-title">Account opened successfully</h3>
+                  <h3 class="tgk-workflow-title">Client added successfully</h3>
                   <p class="tgk-workflow-copy">
                     <span x-text="maestroNewContact.name"></span>
                     has been added to your book. Redirecting now…

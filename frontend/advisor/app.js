@@ -59,7 +59,7 @@ function advisorApp() {
       stepsKey: 'onboardingLoadingSteps',
       steps: [
         'Connecting to Docusign IAM',
-        'Preparing account opening',
+        'Preparing new client setup',
         'Launching the embedded experience'
       ]
     }),
@@ -520,11 +520,11 @@ function advisorApp() {
       try {
         const workflowId = this.getAccountOpeningWorkflowId();
         if (!workflowId) {
-          throw new Error('No account opening workflow is configured.');
+          throw new Error('No add new client workflow is configured.');
         }
 
         const result = await TGK_API.triggerMaestroWorkflow(workflowId, {
-          instance_name: `TGK Wealth Account Opening ${new Date().toISOString()}`,
+          instance_name: `TGK Wealth Add New Client ${new Date().toISOString()}`,
           trigger_inputs: {
             appSlug: window.TGK_CONFIG?.appSlug
           }
@@ -538,7 +538,7 @@ function advisorApp() {
         void this.startMaestroCustomerTracking();
       } catch (e) {
         console.error('Failed to load Maestro workflow:', e);
-        this.maestroError = e.message || 'Failed to launch account opening.';
+        this.maestroError = e.message || 'Failed to launch add new client.';
         this.stopMaestroCreationEvents();
       } finally {
         this.maestroLoading = false;
