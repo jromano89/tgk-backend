@@ -185,11 +185,11 @@
                   <div class="tgk-account-card__title" x-text="acct.metadata?.name || acct.account_type"></div>
                   <div class="tgk-account-card__meta" x-text="accountLabel(acct)"></div>
                 </div>
-                <template x-if="acct.metadata?.ytdReturn != null">
-                  <span class="tgk-status-badge" :class="acct.metadata.ytdReturn >= 0 ? 'tgk-status-badge--success' : 'tgk-status-badge--danger'" x-text="fmtPct(acct.metadata.ytdReturn) + ' YTD'"></span>
+                <template x-if="accountHasYtdReturn(acct)">
+                  <span class="tgk-status-badge" :class="accountYtdReturn(acct) >= 0 ? 'tgk-status-badge--success' : 'tgk-status-badge--danger'" x-text="fmtPct(accountYtdReturn(acct)) + ' YTD'"></span>
                 </template>
               </div>
-              <div class="tgk-account-card__value" x-text="fmtMoney(acct.metadata?.value)"></div>
+              <div class="tgk-account-card__value" x-text="fmtMoney(accountValue(acct))"></div>
               <div class="tgk-allocation-bar">
                 <div class="tgk-allocation-bar__segment tgk-allocation-bar__segment--equity" :style="`width:${acct.metadata?.allocEquity || 0}%`"></div>
                 <div class="tgk-allocation-bar__segment tgk-allocation-bar__segment--fixed" :style="`width:${acct.metadata?.allocFixed || 0}%`"></div>

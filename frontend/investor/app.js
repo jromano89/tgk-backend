@@ -130,14 +130,11 @@ function investorApp() {
     },
 
     get totalPortfolioValue() {
-      return accountsTotalValue(this.accounts);
+      return customerPortfolioValue(this.selectedClient);
     },
 
     get ytdReturn() {
-      const portfolioValue = this.totalPortfolioValue;
-      if (this.accounts.length === 0 || portfolioValue === 0) return 0;
-      const total = this.accounts.reduce((sum, a) => sum + ((a.metadata?.ytdReturn || 0) * accountValue(a)), 0);
-      return total / portfolioValue;
+      return customerYtdReturn(this.selectedClient);
     },
 
     async dismissTask(id) {

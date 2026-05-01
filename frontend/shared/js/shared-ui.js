@@ -30,6 +30,15 @@ function accountValue(account) {
   return Number.isFinite(value) ? value : 0;
 }
 
+function accountHasYtdReturn(account) {
+  return account?.metadata?.ytdReturn != null || account?.ytdReturn != null;
+}
+
+function accountYtdReturn(account) {
+  const value = Number(account?.metadata?.ytdReturn ?? account?.ytdReturn ?? 0);
+  return Number.isFinite(value) ? value : 0;
+}
+
 function accountsTotalValue(accounts) {
   return Array.isArray(accounts)
     ? accounts.reduce((sum, account) => sum + accountValue(account), 0)
@@ -44,6 +53,18 @@ function customerAccounts(customer) {
 
 function customerPortfolioValue(customer) {
   return accountsTotalValue(customerAccounts(customer));
+}
+
+function customerYtdReturn(customer) {
+  const accounts = customerAccounts(customer);
+  const portfolioValue = accountsTotalValue(accounts);
+  if (accounts.length === 0 || portfolioValue === 0) return 0;
+
+  const weightedReturn = accounts.reduce((sum, account) => (
+    sum + (accountYtdReturn(account) * accountValue(account))
+  ), 0);
+
+  return weightedReturn / portfolioValue;
 }
 
 function accountLabel(account) {
