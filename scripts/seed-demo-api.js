@@ -22,6 +22,13 @@ function account(id, name, accountType, value, ytdReturn, allocations, extra = {
   };
 }
 
+function customerAum(customer) {
+  return (customer.data?.accounts || []).reduce((sum, accountRecord) => {
+    const value = Number(accountRecord.value || 0);
+    return sum + (Number.isFinite(value) ? value : 0);
+  }, 0);
+}
+
 function transaction(id, employeeId, customerId, type, status, name) {
   return {
     id,
@@ -89,7 +96,6 @@ const customers = [
     status: 'review',
     data: {
       riskProfile: 'Balanced Growth',
-      value: 9600000,
       netWorth: 21700000,
       changePct: 0.028,
       accounts: [
@@ -108,7 +114,6 @@ const customers = [
     status: 'active',
     data: {
       riskProfile: 'Moderate',
-      value: 10800000,
       netWorth: 24300000,
       changePct: 0.019,
       accounts: [
@@ -127,7 +132,6 @@ const customers = [
     status: 'pending',
     data: {
       riskProfile: 'Growth',
-      value: 12300000,
       netWorth: 27200000,
       changePct: 0.013,
       accounts: [
@@ -146,7 +150,6 @@ const customers = [
     status: 'active',
     data: {
       riskProfile: 'Moderate Growth',
-      value: 16800000,
       netWorth: 36200000,
       changePct: 0.022,
       accounts: [
@@ -165,7 +168,6 @@ const customers = [
     status: 'active',
     data: {
       riskProfile: 'Income Plus',
-      value: 8400000,
       netWorth: 19100000,
       changePct: 0.017,
       accounts: [
@@ -260,7 +262,7 @@ async function main() {
     customers: seededCustomers.length,
     tasks: seededTasks.length,
     transactions: seededTransactions.length,
-    totalAum: seededCustomers.reduce((sum, customer) => sum + Number(customer.data?.value || 0), 0)
+    totalAum: seededCustomers.reduce((sum, customer) => sum + customerAum(customer), 0)
   }, null, 2));
 }
 

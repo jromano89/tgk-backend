@@ -25,6 +25,27 @@ function fmtPct(n) {
   return sign + normalized.toFixed(1) + '%';
 }
 
+function accountValue(account) {
+  const value = Number(account?.metadata?.value ?? account?.value ?? 0);
+  return Number.isFinite(value) ? value : 0;
+}
+
+function accountsTotalValue(accounts) {
+  return Array.isArray(accounts)
+    ? accounts.reduce((sum, account) => sum + accountValue(account), 0)
+    : 0;
+}
+
+function customerAccounts(customer) {
+  const directAccounts = Array.isArray(customer?.accounts) ? customer.accounts : [];
+  const metadataAccounts = Array.isArray(customer?.metadata?.accounts) ? customer.metadata.accounts : [];
+  return directAccounts.length > 0 ? directAccounts : metadataAccounts;
+}
+
+function customerPortfolioValue(customer) {
+  return accountsTotalValue(customerAccounts(customer));
+}
+
 function accountLabel(account) {
   const label = String(
     account?.metadata?.accountType

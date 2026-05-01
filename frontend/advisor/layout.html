@@ -141,7 +141,7 @@
                         </div>
                       </div>
                     </td>
-                    <td class="tgk-data-table__cell tgk-data-table__cell--numeric" x-text="fmtMoney(c.metadata?.value)"></td>
+                    <td class="tgk-data-table__cell tgk-data-table__cell--numeric" x-text="fmtMoney(customerPortfolioValue(c))"></td>
                     <td class="tgk-data-table__cell tgk-data-table__cell--numeric" x-text="fmtMoney(c.metadata?.netWorth)"></td>
                     <td class="tgk-data-table__cell">
                       <div class="tgk-data-table__trend">
@@ -212,7 +212,7 @@
             </div>
             <section class="tgk-kpi tgk-tone-border--sky">
               <div class="tgk-kpi__label">Total AUM</div>
-              <div class="tgk-kpi__value" x-text="fmtMoney(selectedContact.metadata?.value)"></div>
+              <div class="tgk-kpi__value" x-text="fmtMoney(customerPortfolioValue(selectedContact))"></div>
               <div class="u-row u-gap-2" style="margin-top:8px;">
                 <svg width="80" height="24" viewBox="0 0 80 24">
                   <polyline fill="none" :stroke="(selectedContact.metadata?.changePct || 0) >= 0 ? '#16a34a' : '#dc2626'" stroke-width="2" stroke-linecap="round" :points="sparklinePath((selectedContact.metadata?.changePct || 0) >= 0)" />

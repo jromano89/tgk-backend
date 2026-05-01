@@ -140,7 +140,7 @@ function advisorApp() {
     },
 
     get totalAum() {
-      return this.customers.reduce((sum, c) => sum + (c.metadata?.value || 0), 0);
+      return this.customers.reduce((sum, c) => sum + customerPortfolioValue(c), 0);
     },
 
     get totalNetWorth() {
