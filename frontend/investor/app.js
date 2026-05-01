@@ -1,7 +1,3 @@
-function isEnvelopeTransaction(record) {
-  return String(record?.type || 'envelope').trim().toLowerCase() === 'envelope';
-}
-
 function investorApp() {
   const preferredAdvisorId = String(window.TGK_CONFIG?.advisorId || '').trim();
 
@@ -29,15 +25,13 @@ function investorApp() {
     customers: [],
     selectedClientId: null,
     selectedClient: null,
-    accounts: [],
-    transactions: [],
     loading: true,
-    tasks: [],
     showTaskWorkflow: false,
     taskWorkflowKind: 'asset-transfer',
     taskWorkflowTask: null,
     taskWorkflowInstanceUrl: '',
     taskWorkflowError: null,
+    workspaceStatus: '',
 
     async init() {
       this.initializePortalChrome();
@@ -97,9 +91,6 @@ function investorApp() {
         const detail = await TGK_API.getCustomer(this.selectedClientId);
         this.selectedClient = detail;
         TGK_API.setPreferredCustomerId(detail.id);
-        this.accounts = detail.accounts || [];
-        this.transactions = (detail.transactions || []).filter(isEnvelopeTransaction);
-        this.tasks = detail.tasks || [];
         this.assignedAdvisor = this.advisors.find((advisor) => advisor.id === detail.employee_id)
           || this.advisors.find((advisor) => advisor.id === preferredAdvisorId)
           || this.advisors[0]
@@ -107,9 +98,6 @@ function investorApp() {
       } catch (e) {
         console.error('Failed to load client:', e);
         this.selectedClient = null;
-        this.accounts = [];
-        this.transactions = [];
-        this.tasks = [];
       }
     },
 
@@ -139,9 +127,8 @@ function investorApp() {
 
     async dismissTask(id) {
       try {
-        const nextTasks = this.tasks.filter((task) => task.id !== id);
+        const nextTasks = customerTasks(this.selectedClient).filter((task) => task.id !== id);
         await TGK_API.deleteTask(id);
-        this.tasks = nextTasks;
         if (this.selectedClient) {
           this.selectedClient = {
             ...this.selectedClient,
@@ -300,12 +287,10 @@ function investorApp() {
         }
       })
         .then((savedTask) => {
-          this.tasks = this.tasks.map((item) => (item.id === savedTask.id ? savedTask : item));
-
           if (this.selectedClient) {
             this.selectedClient = {
               ...this.selectedClient,
-              tasks: (this.selectedClient.tasks || []).map((item) => (item.id === savedTask.id ? savedTask : item))
+              tasks: customerTasks(this.selectedClient).map((item) => (item.id === savedTask.id ? savedTask : item))
             };
           }
 

@@ -38,10 +38,6 @@ function agreementTypeForTransaction(transaction) {
   return agreementTypeForName(transaction?.name);
 }
 
-function isEnvelopeTransaction(record) {
-  return String(record?.type || 'envelope').trim().toLowerCase() === 'envelope';
-}
-
 function getInitialAdvisorView() {
   const view = new URL(window.location.href).searchParams.get('view');
   return String(view || 'dashboard').trim() || 'dashboard';
@@ -72,8 +68,6 @@ function advisorApp() {
     currentUser: null,
     customers: [],
     selectedContact: null,
-    selectedContactAccounts: [],
-    selectedContactTransactions: [],
     _clientDetailEventsSubscription: null,
     _clientDetailEventsTimeout: null,
     searchQuery: '',
@@ -94,6 +88,7 @@ function advisorApp() {
     _maestroRedirectTimer: null,
     _maestroTrackingStarted: false,
     _maestroKnownContactIds: new Set(),
+    workspaceStatus: '',
 
     async init() {
       this.initializePortalChrome();
@@ -258,11 +253,8 @@ function advisorApp() {
         const detail = await TGK_API.getCustomer(contact.id, { includeTasks: false });
         this.selectedContact = detail;
         TGK_API.setPreferredCustomerId(detail.id);
-        this.selectedContactAccounts = detail.accounts || [];
-        this.selectedContactTransactions = (detail.transactions || []).filter(isEnvelopeTransaction);
       } catch (e) {
-        this.selectedContactAccounts = [];
-        this.selectedContactTransactions = [];
+        console.error('Failed to load customer detail:', e);
       }
       this.setView('client');
       this.startClientDetailEvents(contact.id);
@@ -306,8 +298,6 @@ function advisorApp() {
         }
         const detail = await TGK_API.getCustomer(contactId, { includeTasks: false });
         this.selectedContact = detail;
-        this.selectedContactAccounts = detail.accounts || [];
-        this.selectedContactTransactions = (detail.transactions || []).filter(isEnvelopeTransaction);
         const idx = this.customers.findIndex(c => c.id === contactId);
         if (idx !== -1) {
           this.customers[idx] = { ...this.customers[idx], ...detail, accounts: undefined, transactions: undefined };
@@ -349,8 +339,6 @@ function advisorApp() {
       this.stopClientDetailEvents();
       this.setView('dashboard');
       this.selectedContact = null;
-      this.selectedContactAccounts = [];
-      this.selectedContactTransactions = [];
     },
 
     resetOnboardingState() {

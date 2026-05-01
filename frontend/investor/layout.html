@@ -27,7 +27,7 @@
       <button @click="setTab('tasks')" class="tgk-portal-nav__item" :class="{ 'tgk-portal-nav__item--active': tab === 'tasks', 'tgk-portal-nav__item--collapsed': sidebarCollapsed }">
         <svg class="tgk-portal-nav__icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
         <span x-show="!sidebarCollapsed" class="tgk-portal-nav__meta">Tasks
-          <template x-if="tasks.length > 0"><span class="tgk-portal-nav__badge" x-text="tasks.length"></span></template>
+          <template x-if="customerTasks(selectedClient).length > 0"><span class="tgk-portal-nav__badge" x-text="customerTasks(selectedClient).length"></span></template>
         </span>
       </button>
 
@@ -142,7 +142,7 @@
           :class="{ 'tgk-core-tabs__item--active': tab === 'tasks' }">
           <svg class="tgk-core-tabs__icon" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
           <span class="tgk-core-tabs__meta">Tasks
-            <template x-if="tasks.length > 0"><span class="tgk-core-tabs__badge" x-text="tasks.length"></span></template>
+            <template x-if="customerTasks(selectedClient).length > 0"><span class="tgk-core-tabs__badge" x-text="customerTasks(selectedClient).length"></span></template>
           </span>
         </button>
       </div>
@@ -168,7 +168,7 @@
             </div>
             <div>
               <div class="tgk-hero-card__label">Accounts</div>
-              <div class="tgk-hero-card__metric" x-text="accounts.length"></div>
+              <div class="tgk-hero-card__metric" x-text="customerAccounts(selectedClient).length"></div>
             </div>
             <div>
               <div class="tgk-hero-card__label">Risk Profile</div>
@@ -178,11 +178,11 @@
         </div>
 
         <div class="tgk-account-grid" style="margin-bottom:24px;">
-          <template x-for="acct in accounts" :key="acct.id">
+          <template x-for="acct in customerAccounts(selectedClient)" :key="acct.id">
             <div class="tgk-account-card">
               <div class="tgk-account-card__header">
                 <div>
-                  <div class="tgk-account-card__title" x-text="acct.metadata?.name || acct.account_type"></div>
+                  <div class="tgk-account-card__title" x-text="accountName(acct)"></div>
                   <div class="tgk-account-card__meta" x-text="accountLabel(acct)"></div>
                 </div>
                 <template x-if="accountHasYtdReturn(acct)">
@@ -191,16 +191,16 @@
               </div>
               <div class="tgk-account-card__value" x-text="fmtMoney(accountValue(acct))"></div>
               <div class="tgk-allocation-bar">
-                <div class="tgk-allocation-bar__segment tgk-allocation-bar__segment--equity" :style="`width:${acct.metadata?.allocEquity || 0}%`"></div>
-                <div class="tgk-allocation-bar__segment tgk-allocation-bar__segment--fixed" :style="`width:${acct.metadata?.allocFixed || 0}%`"></div>
-                <div class="tgk-allocation-bar__segment tgk-allocation-bar__segment--alt" :style="`width:${acct.metadata?.allocAlt || 0}%`"></div>
-                <div class="tgk-allocation-bar__segment tgk-allocation-bar__segment--cash" :style="`width:${acct.metadata?.allocCash || 0}%`"></div>
+                <div class="tgk-allocation-bar__segment tgk-allocation-bar__segment--equity" :style="`width:${accountAllocation(acct, 'allocEquity')}%`"></div>
+                <div class="tgk-allocation-bar__segment tgk-allocation-bar__segment--fixed" :style="`width:${accountAllocation(acct, 'allocFixed')}%`"></div>
+                <div class="tgk-allocation-bar__segment tgk-allocation-bar__segment--alt" :style="`width:${accountAllocation(acct, 'allocAlt')}%`"></div>
+                <div class="tgk-allocation-bar__segment tgk-allocation-bar__segment--cash" :style="`width:${accountAllocation(acct, 'allocCash')}%`"></div>
               </div>
               <div class="tgk-allocation-legend">
-                <span class="tgk-allocation-legend__item"><span class="tgk-allocation-legend__dot tgk-allocation-legend__dot--equity"></span> Equity <span x-text="(acct.metadata?.allocEquity||0)+'%'"></span></span>
-                <span class="tgk-allocation-legend__item"><span class="tgk-allocation-legend__dot tgk-allocation-legend__dot--fixed"></span> Fixed <span x-text="(acct.metadata?.allocFixed||0)+'%'"></span></span>
-                <span class="tgk-allocation-legend__item"><span class="tgk-allocation-legend__dot tgk-allocation-legend__dot--alt"></span> Alt <span x-text="(acct.metadata?.allocAlt||0)+'%'"></span></span>
-                <span class="tgk-allocation-legend__item"><span class="tgk-allocation-legend__dot tgk-allocation-legend__dot--cash"></span> Cash <span x-text="(acct.metadata?.allocCash||0)+'%'"></span></span>
+                <span class="tgk-allocation-legend__item"><span class="tgk-allocation-legend__dot tgk-allocation-legend__dot--equity"></span> Equity <span x-text="accountAllocation(acct, 'allocEquity') + '%'"></span></span>
+                <span class="tgk-allocation-legend__item"><span class="tgk-allocation-legend__dot tgk-allocation-legend__dot--fixed"></span> Fixed <span x-text="accountAllocation(acct, 'allocFixed') + '%'"></span></span>
+                <span class="tgk-allocation-legend__item"><span class="tgk-allocation-legend__dot tgk-allocation-legend__dot--alt"></span> Alt <span x-text="accountAllocation(acct, 'allocAlt') + '%'"></span></span>
+                <span class="tgk-allocation-legend__item"><span class="tgk-allocation-legend__dot tgk-allocation-legend__dot--cash"></span> Cash <span x-text="accountAllocation(acct, 'allocCash') + '%'"></span></span>
               </div>
             </div>
           </template>
@@ -228,7 +228,7 @@
               <p class="tgk-panel-copy">Signed packets and live status updates in one place.</p>
             </div>
           </div>
-          <template x-if="transactions.length === 0">
+          <template x-if="customerEnvelopeTransactions(selectedClient).length === 0">
             <div class="tgk-empty-panel tgk-empty-panel--compact">
               <div class="tgk-empty-panel__icon">
                 <svg class="tgk-icon tgk-icon--lg tgk-icon--muted" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
@@ -238,7 +238,7 @@
             </div>
           </template>
           <div class="tgk-record-list">
-            <template x-for="env in transactions" :key="env.id">
+            <template x-for="env in customerEnvelopeTransactions(selectedClient)" :key="env.id">
               <div class="tgk-record-row">
                 <div class="tgk-record-row__main">
                   <div class="tgk-record-row__content">
@@ -254,7 +254,7 @@
                     </div>
                   </div>
                   <div class="tgk-record-row__actions">
-                    <template x-if="String(env.type || '').trim().toLowerCase() === 'envelope'">
+                    <template x-if="isEnvelopeTransaction(env)">
                       <div class="u-row u-gap-2">
                         <button @click="viewTransactionDoc(env)" class="tgk-icon-button" title="View document">
                           <svg class="tgk-icon tgk-icon--md" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
@@ -279,7 +279,7 @@
           <div class="tgk-panel-heading tgk-panel-heading--spaced">
             <h3 class="tgk-panel-title">Tasks</h3>
           </div>
-          <template x-if="tasks.length === 0">
+          <template x-if="customerTasks(selectedClient).length === 0">
             <div class="tgk-empty-panel tgk-empty-panel--compact tgk-empty-panel--tasks">
               <div class="tgk-empty-panel__icon">
                 <svg class="tgk-icon tgk-icon--lg tgk-icon--muted" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
@@ -288,7 +288,7 @@
             </div>
           </template>
           <div class="tgk-task-list">
-            <template x-for="task in tasks" :key="task.id">
+            <template x-for="task in customerTasks(selectedClient)" :key="task.id">
               <div
                 class="tgk-task-card"
                 :class="{ 'tgk-task-card--interactive': taskCanLaunchWorkflow(task) }"

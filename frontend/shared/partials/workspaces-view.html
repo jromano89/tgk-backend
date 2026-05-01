@@ -1,4 +1,4 @@
-<section class="tgk-page-stack tgk-workspaces-view" x-data="{ workspaceStatus: '' }">
+<section class="tgk-page-stack tgk-workspaces-view">
   <section class="tgk-surface-panel tgk-surface-panel--lg tgk-workspaces-intro">
     <div class="tgk-workspaces-intro__header">
       <span class="tgk-workspaces-intro__indicator">Workspaces API</span>
@@ -45,7 +45,7 @@
           <input
             class="tgk-form-input"
             type="text"
-            :placeholder="((typeof selectedContact !== 'undefined' && selectedContact && selectedContact.name) || (typeof selectedClient !== 'undefined' && selectedClient && selectedClient.name) || 'Jane Smith')"
+            :placeholder="portalContactField($data, 'name', 'Jane Smith')"
             autocomplete="off">
         </label>
 
@@ -54,7 +54,7 @@
           <input
             class="tgk-form-input"
             type="email"
-            :placeholder="((typeof selectedContact !== 'undefined' && selectedContact && selectedContact.email) || (typeof selectedClient !== 'undefined' && selectedClient && selectedClient.email) || 'jane.smith@example.com')"
+            :placeholder="portalContactField($data, 'email', 'jane.smith@example.com')"
             autocomplete="off">
         </label>
       </div>

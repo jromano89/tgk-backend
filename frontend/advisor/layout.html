@@ -228,11 +228,11 @@
                 <h3 class="tgk-panel-title">Accounts</h3>
               </div>
               <div class="tgk-account-grid">
-                <template x-for="acct in selectedContactAccounts" :key="acct.id">
+                <template x-for="acct in customerAccounts(selectedContact)" :key="acct.id">
                   <div class="tgk-account-card">
                     <div class="tgk-account-card__header">
                       <div>
-                        <div class="tgk-account-card__title" x-text="acct.metadata?.name || acct.account_type"></div>
+                        <div class="tgk-account-card__title" x-text="accountName(acct)"></div>
                         <div class="tgk-account-card__meta" x-text="accountLabel(acct)"></div>
                       </div>
                       <template x-if="accountHasYtdReturn(acct)">
@@ -241,16 +241,16 @@
                     </div>
                     <div class="tgk-account-card__value" x-text="fmtMoney(accountValue(acct))"></div>
                     <div class="tgk-allocation-bar">
-                      <div class="tgk-allocation-bar__segment tgk-allocation-bar__segment--equity" :style="`width:${acct.metadata?.allocEquity || 0}%`"></div>
-                      <div class="tgk-allocation-bar__segment tgk-allocation-bar__segment--fixed" :style="`width:${acct.metadata?.allocFixed || 0}%`"></div>
-                      <div class="tgk-allocation-bar__segment tgk-allocation-bar__segment--alt" :style="`width:${acct.metadata?.allocAlt || 0}%`"></div>
-                      <div class="tgk-allocation-bar__segment tgk-allocation-bar__segment--cash" :style="`width:${acct.metadata?.allocCash || 0}%`"></div>
+                      <div class="tgk-allocation-bar__segment tgk-allocation-bar__segment--equity" :style="`width:${accountAllocation(acct, 'allocEquity')}%`"></div>
+                      <div class="tgk-allocation-bar__segment tgk-allocation-bar__segment--fixed" :style="`width:${accountAllocation(acct, 'allocFixed')}%`"></div>
+                      <div class="tgk-allocation-bar__segment tgk-allocation-bar__segment--alt" :style="`width:${accountAllocation(acct, 'allocAlt')}%`"></div>
+                      <div class="tgk-allocation-bar__segment tgk-allocation-bar__segment--cash" :style="`width:${accountAllocation(acct, 'allocCash')}%`"></div>
                     </div>
                     <div class="tgk-allocation-legend">
-                      <span class="tgk-allocation-legend__item"><span class="tgk-allocation-legend__dot tgk-allocation-legend__dot--equity"></span> Equity <span x-text="(acct.metadata?.allocEquity||0)+'%'"></span></span>
-                      <span class="tgk-allocation-legend__item"><span class="tgk-allocation-legend__dot tgk-allocation-legend__dot--fixed"></span> Fixed <span x-text="(acct.metadata?.allocFixed||0)+'%'"></span></span>
-                      <span class="tgk-allocation-legend__item"><span class="tgk-allocation-legend__dot tgk-allocation-legend__dot--alt"></span> Alt <span x-text="(acct.metadata?.allocAlt||0)+'%'"></span></span>
-                      <span class="tgk-allocation-legend__item"><span class="tgk-allocation-legend__dot tgk-allocation-legend__dot--cash"></span> Cash <span x-text="(acct.metadata?.allocCash||0)+'%'"></span></span>
+                      <span class="tgk-allocation-legend__item"><span class="tgk-allocation-legend__dot tgk-allocation-legend__dot--equity"></span> Equity <span x-text="accountAllocation(acct, 'allocEquity') + '%'"></span></span>
+                      <span class="tgk-allocation-legend__item"><span class="tgk-allocation-legend__dot tgk-allocation-legend__dot--fixed"></span> Fixed <span x-text="accountAllocation(acct, 'allocFixed') + '%'"></span></span>
+                      <span class="tgk-allocation-legend__item"><span class="tgk-allocation-legend__dot tgk-allocation-legend__dot--alt"></span> Alt <span x-text="accountAllocation(acct, 'allocAlt') + '%'"></span></span>
+                      <span class="tgk-allocation-legend__item"><span class="tgk-allocation-legend__dot tgk-allocation-legend__dot--cash"></span> Cash <span x-text="accountAllocation(acct, 'allocCash') + '%'"></span></span>
                     </div>
                   </div>
                 </template>
@@ -261,7 +261,7 @@
               <div class="tgk-panel-heading tgk-panel-heading--spaced">
                 <h3 class="tgk-panel-title">Documents</h3>
               </div>
-              <template x-if="selectedContactTransactions.length === 0">
+              <template x-if="customerEnvelopeTransactions(selectedContact).length === 0">
                 <div class="tgk-empty-panel tgk-empty-panel--compact">
                   <div class="tgk-empty-panel__icon">
                     <svg class="tgk-icon tgk-icon--lg tgk-icon--muted" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
@@ -271,7 +271,7 @@
                 </div>
               </template>
               <div class="tgk-record-list">
-                <template x-for="env in selectedContactTransactions" :key="env.id">
+                <template x-for="env in customerEnvelopeTransactions(selectedContact)" :key="env.id">
                   <div class="tgk-record-row">
                     <div class="tgk-record-row__main">
                       <div class="tgk-record-row__content">
@@ -287,7 +287,7 @@
                         </div>
                       </div>
                       <div class="tgk-record-row__actions">
-                        <template x-if="String(env.type || '').trim().toLowerCase() === 'envelope'">
+                        <template x-if="isEnvelopeTransaction(env)">
                           <div class="u-row u-gap-2">
                             <button @click="viewTransactionDoc(env)" class="tgk-icon-button" title="View document">
                               <svg class="tgk-icon tgk-icon--md" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
@@ -379,7 +379,7 @@
                       </div>
 
                       <div class="tgk-record-row__actions">
-                        <template x-if="String(env.type || '').trim().toLowerCase() === 'envelope'">
+                        <template x-if="isEnvelopeTransaction(env)">
                           <div class="u-row u-gap-2">
                             <button @click="viewTransactionDoc(env)" class="tgk-icon-button" title="View document">
                               <svg class="tgk-icon tgk-icon--md" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>

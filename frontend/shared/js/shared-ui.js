@@ -39,6 +39,24 @@ function accountYtdReturn(account) {
   return Number.isFinite(value) ? value : 0;
 }
 
+function accountName(account) {
+  const name = String(
+    account?.metadata?.name
+    || account?.metadata?.title
+    || account?.name
+    || account?.title
+    || account?.account_type
+    || ''
+  ).trim();
+
+  return name || 'Untitled Account';
+}
+
+function accountAllocation(account, key) {
+  const value = Number(account?.metadata?.[key] ?? account?.[key] ?? 0);
+  return Number.isFinite(value) ? value : 0;
+}
+
 function accountsTotalValue(accounts) {
   return Array.isArray(accounts)
     ? accounts.reduce((sum, account) => sum + accountValue(account), 0)
@@ -49,6 +67,14 @@ function customerAccounts(customer) {
   const directAccounts = Array.isArray(customer?.accounts) ? customer.accounts : [];
   const metadataAccounts = Array.isArray(customer?.metadata?.accounts) ? customer.metadata.accounts : [];
   return directAccounts.length > 0 ? directAccounts : metadataAccounts;
+}
+
+function customerTransactions(customer) {
+  return Array.isArray(customer?.transactions) ? customer.transactions : [];
+}
+
+function customerTasks(customer) {
+  return Array.isArray(customer?.tasks) ? customer.tasks : [];
 }
 
 function customerPortfolioValue(customer) {
@@ -77,6 +103,16 @@ function accountLabel(account) {
   ).trim();
 
   return label || 'Account';
+}
+
+function customerEnvelopeTransactions(customer) {
+  return customerTransactions(customer).filter(isEnvelopeTransaction);
+}
+
+function portalContactField(scope, fieldName, fallback) {
+  const contact = scope?.selectedContact || scope?.selectedClient || null;
+  const value = String(contact?.[fieldName] || '').trim();
+  return value || fallback;
 }
 
 function getConfiguredIamProducts() {
