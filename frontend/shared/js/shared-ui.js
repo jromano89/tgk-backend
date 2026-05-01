@@ -383,7 +383,7 @@ function newsPanelTemplate() {
               </template>
             </div>
             <div class="tgk-news-footer" x-show="loaded && filteredItems.length > 0">
-              <span class="tgk-news-live-dot"></span> Live feed
+              <span class="tgk-news-live-dot"></span> <span x-text="feedLabel || 'Live feed'"></span>
             </div>
           </div>
         </div>

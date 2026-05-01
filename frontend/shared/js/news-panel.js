@@ -5,7 +5,18 @@
 function newsPanel() {
   const refreshMs = 15 * 60 * 1000;
   const categories = ['all', 'MACRO', 'MARKETS', 'POLICY'];
+  const feeds = [
+    {
+      label: 'WSJ Markets',
+      url: 'https://feeds.a.dj.com/rss/RSSMarketsMain.xml'
+    },
+    {
+      label: 'Google News',
+      url: 'https://news.google.com/rss/search?q=markets&hl=en-US&gl=US&ceid=US:en'
+    }
+  ];
   let cache = null;
+  let cacheFeedLabel = 'Live feed';
   let cacheAt = 0;
 
   function textOf(node, selector) {
@@ -117,12 +128,53 @@ function newsPanel() {
       .filter(item => item.title);
   }
 
+  function buildFallbackItems() {
+    const fallbackItems = [
+      {
+        title: 'Markets digest latest economic data as investors assess portfolio risk',
+        source: 'TGK Demo',
+        description: 'A demo market headline is available while the live feed refreshes.',
+        minutesAgo: 5
+      },
+      {
+        title: 'Policy outlook remains in focus for wealth management clients',
+        source: 'TGK Demo',
+        description: 'Advisor teams are monitoring rates, policy signals, and investor sentiment.',
+        minutesAgo: 20
+      },
+      {
+        title: 'Portfolio allocation trends point to balanced demand across asset classes',
+        source: 'TGK Demo',
+        description: 'Equities, fixed income, alternatives, and cash remain central to client conversations.',
+        minutesAgo: 45
+      }
+    ];
+
+    return fallbackItems.map(item => {
+      const category = categorize(item.title, item.source);
+      const badge = badgeFor(item.title, category);
+
+      return {
+        category,
+        badge: badge?.label,
+        badgeColor: badge?.color,
+        time: formatRelativeTime(new Date(Date.now() - item.minutesAgo * 60 * 1000)),
+        title: item.title,
+        summary: item.description,
+        source: item.source,
+        impact: impactLevel(item.title, category),
+        link: ''
+      };
+    });
+  }
+
   return {
     open: false,
     search: '',
     activeCategory: 'all',
     categories,
     items: [],
+    feedLabel: 'Live feed',
     loaded: false,
     loading: false,
     error: null,
@@ -130,6 +182,7 @@ function newsPanel() {
     async init() {
       if (cache && Date.now() - cacheAt < refreshMs) {
         this.items = cache;
+        this.feedLabel = cacheFeedLabel;
         this.loaded = true;
       }
     },
@@ -149,17 +202,42 @@ function newsPanel() {
       this.loading = true;
       this.error = null;
 
+      let lastError = null;
+
       try {
-        const xml = await TGK_API.proxyText({
-          method: 'GET',
-          url: 'https://news.google.com/rss/search?q=markets&hl=en-US&gl=US&ceid=US:en'
-        });
-        const items = parseFeed(xml);
+        for (const feed of feeds) {
+          try {
+            const xml = await TGK_API.proxyText({
+              method: 'GET',
+              url: feed.url
+            });
+            const items = parseFeed(xml);
+            if (items.length === 0) {
+              throw new Error(`${feed.label} returned no headlines.`);
+            }
+
+            this.feedLabel = 'Live feed';
+            cacheFeedLabel = this.feedLabel;
+            this.items = items;
+            cache = items;
+            cacheAt = Date.now();
+            this.loaded = true;
+            return;
+          } catch (error) {
+            lastError = error;
+            console.warn(`Failed to load headlines from ${feed.label}:`, error);
+          }
+        }
+
+        const items = buildFallbackItems();
         if (items.length > 0) {
+          this.feedLabel = 'Demo feed';
+          cacheFeedLabel = this.feedLabel;
           this.items = items;
           cache = items;
           cacheAt = Date.now();
           this.loaded = true;
+          return;
         } else {
           this.items = [];
           this.error = 'Unable to load live headlines.';
@@ -169,6 +247,9 @@ function newsPanel() {
         this.error = 'Unable to load live headlines.';
         console.error('Failed to refresh headlines:', error);
       } finally {
+        if (lastError && this.loaded && this.feedLabel === 'Demo feed') {
+          console.warn('Using demo headlines after live feed failure:', lastError);
+        }
         this.loading = false;
       }
     },
