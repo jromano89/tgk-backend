@@ -87,6 +87,7 @@ function advisorApp() {
     _maestroCreationEventsSubscription: null,
     _maestroRedirectTimer: null,
     _maestroTrackingStarted: false,
+    _maestroTrackingPromise: null,
     _maestroKnownContactIds: new Set(),
     workspaceStatus: '',
 
@@ -352,6 +353,7 @@ function advisorApp() {
       this.clearOnboardingRedirectTimer();
       this.stopWorkflowLoading();
       this._maestroTrackingStarted = false;
+      this._maestroTrackingPromise = null;
       this._maestroKnownContactIds = new Set();
     },
 
@@ -389,15 +391,24 @@ function advisorApp() {
       if (this._maestroTrackingStarted || this.maestroCompleted) {
         return;
       }
-
-      this._maestroTrackingStarted = true;
-      await this.snapshotMaestroCustomers();
-      if (!this.showOnboarding || this.maestroCompleted) {
-        return;
+      if (this._maestroTrackingPromise) {
+        return this._maestroTrackingPromise;
       }
 
-      this.startMaestroCreationEvents();
-      void this.checkForNewMaestroCustomer();
+      this._maestroTrackingPromise = (async () => {
+        await this.snapshotMaestroCustomers();
+        if (!this.showOnboarding || this.maestroCompleted) {
+          return;
+        }
+
+        this._maestroTrackingStarted = true;
+        this.startMaestroCreationEvents();
+        void this.checkForNewMaestroCustomer();
+      })().finally(() => {
+        this._maestroTrackingPromise = null;
+      });
+
+      return this._maestroTrackingPromise;
     },
 
     async refreshContactsAfterOnboarding(targetId) {
@@ -507,8 +518,6 @@ function advisorApp() {
       this.startWorkflowLoading();
 
       try {
-        await this.startMaestroCustomerTracking();
-
         const workflowId = this.getAccountOpeningWorkflowId();
         if (!workflowId) {
           throw new Error('No account opening workflow is configured.');
@@ -526,6 +535,7 @@ function advisorApp() {
         }
 
         this.maestroInstanceUrl = result.instance_url;
+        void this.startMaestroCustomerTracking();
       } catch (e) {
         console.error('Failed to load Maestro workflow:', e);
         this.maestroError = e.message || 'Failed to launch account opening.';
