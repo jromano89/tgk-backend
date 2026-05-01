@@ -45,7 +45,7 @@
           <input
             class="tgk-form-input"
             type="text"
-            :placeholder="(selectedContact && selectedContact.name) || (selectedClient && selectedClient.name) || 'Jane Smith'"
+            :placeholder="((typeof selectedContact !== 'undefined' && selectedContact && selectedContact.name) || (typeof selectedClient !== 'undefined' && selectedClient && selectedClient.name) || 'Jane Smith')"
             autocomplete="off">
         </label>
 
@@ -54,7 +54,7 @@
           <input
             class="tgk-form-input"
             type="email"
-            :placeholder="(selectedContact && selectedContact.email) || (selectedClient && selectedClient.email) || 'jane.smith@example.com'"
+            :placeholder="((typeof selectedContact !== 'undefined' && selectedContact && selectedContact.email) || (typeof selectedClient !== 'undefined' && selectedClient && selectedClient.email) || 'jane.smith@example.com')"
             autocomplete="off">
         </label>
       </div>
