@@ -4,11 +4,12 @@
  */
 function newsPanel() {
   const refreshMs = 15 * 60 * 1000;
+  const maxHeadlineAgeMs = 7 * 24 * 60 * 60 * 1000;
   const categories = ['all', 'MACRO', 'MARKETS', 'POLICY'];
   const feeds = [
     {
-      label: 'WSJ Markets',
-      url: 'https://feeds.a.dj.com/rss/RSSMarketsMain.xml'
+      label: 'Investing.com Stock Market News',
+      url: 'https://www.investing.com/rss/news_25.rss'
     },
     {
       label: 'Google News',
@@ -16,7 +17,6 @@ function newsPanel() {
     }
   ];
   let cache = null;
-  let cacheFeedLabel = 'Live feed';
   let cacheAt = 0;
 
   function textOf(node, selector) {
@@ -85,6 +85,20 @@ function newsPanel() {
     return `${days} day${days === 1 ? '' : 's'} ago`;
   }
 
+  function parsePubDate(value) {
+    const rawValue = String(value || '').trim();
+    if (!rawValue) {
+      return null;
+    }
+
+    const normalizedValue = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(rawValue)
+      ? `${rawValue.replace(' ', 'T')}Z`
+      : rawValue;
+    const pubDate = new Date(normalizedValue);
+
+    return Number.isNaN(pubDate.getTime()) ? null : pubDate;
+  }
+
   function buildSummary(title, source, description) {
     let summary = decodeHtml(description);
     if (source && summary.endsWith(source)) {
@@ -106,21 +120,24 @@ function newsPanel() {
       .slice(0, 10)
       .map(item => {
         const source = textOf(item, 'source');
+        const displaySource = source || textOf(item, 'author');
         const rawTitle = textOf(item, 'title');
+        const pubDate = parsePubDate(textOf(item, 'pubDate'));
         const title = source && rawTitle.endsWith(` - ${source}`)
           ? rawTitle.slice(0, -(` - ${source}`).length).trim()
           : rawTitle;
-        const category = categorize(title, source);
+        const category = categorize(title, displaySource);
         const badge = badgeFor(title, category);
 
         return {
           category,
           badge: badge?.label,
           badgeColor: badge?.color,
-          time: formatRelativeTime(new Date(textOf(item, 'pubDate'))),
+          time: formatRelativeTime(pubDate),
+          publishedAt: pubDate ? pubDate.getTime() : null,
           title,
-          summary: buildSummary(title, source, textOf(item, 'description')),
-          source,
+          summary: buildSummary(title, displaySource, textOf(item, 'description')),
+          source: displaySource,
           impact: impactLevel(title, category),
           link: textOf(item, 'link')
         };
@@ -128,44 +145,12 @@ function newsPanel() {
       .filter(item => item.title);
   }
 
-  function buildFallbackItems() {
-    const fallbackItems = [
-      {
-        title: 'Markets digest latest economic data as investors assess portfolio risk',
-        source: 'TGK Demo',
-        description: 'A demo market headline is available while the live feed refreshes.',
-        minutesAgo: 5
-      },
-      {
-        title: 'Policy outlook remains in focus for wealth management clients',
-        source: 'TGK Demo',
-        description: 'Advisor teams are monitoring rates, policy signals, and investor sentiment.',
-        minutesAgo: 20
-      },
-      {
-        title: 'Portfolio allocation trends point to balanced demand across asset classes',
-        source: 'TGK Demo',
-        description: 'Equities, fixed income, alternatives, and cash remain central to client conversations.',
-        minutesAgo: 45
-      }
-    ];
+  function isFreshHeadline(item) {
+    if (!item.publishedAt) {
+      return true;
+    }
 
-    return fallbackItems.map(item => {
-      const category = categorize(item.title, item.source);
-      const badge = badgeFor(item.title, category);
-
-      return {
-        category,
-        badge: badge?.label,
-        badgeColor: badge?.color,
-        time: formatRelativeTime(new Date(Date.now() - item.minutesAgo * 60 * 1000)),
-        title: item.title,
-        summary: item.description,
-        source: item.source,
-        impact: impactLevel(item.title, category),
-        link: ''
-      };
-    });
+    return item.publishedAt > Date.now() - maxHeadlineAgeMs;
   }
 
   return {
@@ -174,7 +159,6 @@ function newsPanel() {
     activeCategory: 'all',
     categories,
     items: [],
-    feedLabel: 'Live feed',
     loaded: false,
     loading: false,
     error: null,
@@ -182,7 +166,6 @@ function newsPanel() {
     async init() {
       if (cache && Date.now() - cacheAt < refreshMs) {
         this.items = cache;
-        this.feedLabel = cacheFeedLabel;
         this.loaded = true;
       }
     },
@@ -202,8 +185,6 @@ function newsPanel() {
       this.loading = true;
       this.error = null;
 
-      let lastError = null;
-
       try {
         for (const feed of feeds) {
           try {
@@ -212,44 +193,28 @@ function newsPanel() {
               url: feed.url
             });
             const items = parseFeed(xml);
-            if (items.length === 0) {
-              throw new Error(`${feed.label} returned no headlines.`);
+            const freshItems = items.filter(isFreshHeadline);
+            if (freshItems.length === 0) {
+              throw new Error(`${feed.label} returned no fresh headlines.`);
             }
 
-            this.feedLabel = 'Live feed';
-            cacheFeedLabel = this.feedLabel;
-            this.items = items;
-            cache = items;
+            this.items = freshItems;
+            cache = freshItems;
             cacheAt = Date.now();
             this.loaded = true;
             return;
           } catch (error) {
-            lastError = error;
             console.warn(`Failed to load headlines from ${feed.label}:`, error);
           }
         }
 
-        const items = buildFallbackItems();
-        if (items.length > 0) {
-          this.feedLabel = 'Demo feed';
-          cacheFeedLabel = this.feedLabel;
-          this.items = items;
-          cache = items;
-          cacheAt = Date.now();
-          this.loaded = true;
-          return;
-        } else {
-          this.items = [];
-          this.error = 'Unable to load live headlines.';
-        }
+        this.items = [];
+        this.error = 'Unable to load live headlines.';
       } catch (error) {
         this.items = [];
         this.error = 'Unable to load live headlines.';
         console.error('Failed to refresh headlines:', error);
       } finally {
-        if (lastError && this.loaded && this.feedLabel === 'Demo feed') {
-          console.warn('Using demo headlines after live feed failure:', lastError);
-        }
         this.loading = false;
       }
     },
