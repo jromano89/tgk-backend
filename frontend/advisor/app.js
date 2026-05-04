@@ -38,6 +38,31 @@ function agreementTypeForTransaction(transaction) {
   return agreementTypeForName(transaction?.name);
 }
 
+function eventRecordCustomerId(event) {
+  return String(
+    event?.record?.customerId
+    || event?.record?.customer_id
+    || ''
+  ).trim();
+}
+
+function clientDetailEventMatchesContact(event, contactId) {
+  const normalizedContactId = String(contactId || '').trim();
+  if (!normalizedContactId) {
+    return false;
+  }
+
+  if (event?.resource === 'customers') {
+    return event.id === normalizedContactId;
+  }
+
+  if (event?.resource === 'transactions') {
+    return eventRecordCustomerId(event) === normalizedContactId;
+  }
+
+  return false;
+}
+
 function getInitialAdvisorView() {
   const view = new URL(window.location.href).searchParams.get('view');
   return String(view || 'dashboard').trim() || 'dashboard';
@@ -263,14 +288,13 @@ function advisorApp() {
 
     startClientDetailEvents(contactId) {
       this.stopClientDetailEvents();
-      if (normalizeStatusValue(this.selectedContact?.metadata?.status) !== 'pending') return;
       const app = this;
       const subscription = TGK_API.subscribeDataEvents({
         onConnected() {
           void app.refreshSelectedContactDetail(contactId);
         },
         onChange(event) {
-          if (event?.resource !== 'customers' || event.id !== contactId) {
+          if (!clientDetailEventMatchesContact(event, contactId)) {
             return;
           }
           void app.refreshSelectedContactDetail(contactId);
@@ -302,9 +326,6 @@ function advisorApp() {
         const idx = this.customers.findIndex(c => c.id === contactId);
         if (idx !== -1) {
           this.customers[idx] = { ...this.customers[idx], ...detail, accounts: undefined, transactions: undefined };
-        }
-        if (normalizeStatusValue(detail.metadata?.status) === 'active') {
-          this.stopClientDetailEvents();
         }
         return detail;
       } catch (e) {
