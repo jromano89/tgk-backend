@@ -2883,20 +2883,6 @@ table {
   line-height: 1.4
 }
 
-.tgk-data-table__trend {
-  display: flex;
-  align-items: center;
-  gap: 8px
-}
-
-.tgk-data-table__change--up {
-  color: #16a34a
-}
-
-.tgk-data-table__change--down {
-  color: #dc2626
-}
-
 .tgk-data-table__remove {
   display: inline-flex;
   width: 20px;

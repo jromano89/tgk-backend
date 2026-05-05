@@ -82,7 +82,7 @@
               <input x-model="searchQuery" type="text" placeholder="Search clients" class="tgk-form-input tgk-search-field__input">
             </label>
             <div x-data x-init="mountSharedTemplate($el, newsPanelTemplate())"></div>
-            <button @click="openOnboarding()" class="tgk-button tgk-button--primary">Add New Client</button>
+            <button @click="openOnboarding()" class="tgk-button tgk-button--primary">Add New Investor</button>
           </div>
         </div>
 
@@ -123,7 +123,6 @@
                   <th class="tgk-data-table__heading">Investor</th>
                   <th class="tgk-data-table__heading">AUM</th>
                   <th class="tgk-data-table__heading">Net Worth</th>
-                  <th class="tgk-data-table__heading">Trend</th>
                   <th class="tgk-data-table__heading">Risk Profile</th>
                   <th class="tgk-data-table__heading">Status</th>
                   <th class="tgk-data-table__heading tgk-data-table__heading--action"></th>
@@ -143,14 +142,6 @@
                     </td>
                     <td class="tgk-data-table__cell tgk-data-table__cell--numeric" x-text="fmtMoney(customerPortfolioValue(c))"></td>
                     <td class="tgk-data-table__cell tgk-data-table__cell--numeric" x-text="fmtMoney(c.metadata?.netWorth)"></td>
-                    <td class="tgk-data-table__cell">
-                      <div class="tgk-data-table__trend">
-                        <svg width="60" height="20" viewBox="0 0 80 24">
-                          <polyline fill="none" :stroke="(c.metadata?.changePct || 0) >= 0 ? '#16a34a' : '#dc2626'" stroke-width="2" stroke-linecap="round" :points="sparklinePath((c.metadata?.changePct || 0) >= 0)" />
-                        </svg>
-                        <span :class="(c.metadata?.changePct || 0) >= 0 ? 'tgk-data-table__change--up' : 'tgk-data-table__change--down'" x-text="fmtPct(c.metadata?.changePct)"></span>
-                      </div>
-                    </td>
                     <td class="tgk-data-table__cell" x-text="c.metadata?.riskProfile || '—'"></td>
                     <td class="tgk-data-table__cell">
                       <span class="tgk-status-badge" :class="statusClasses(c.metadata?.status)" x-text="c.metadata?.status || 'active'"></span>
