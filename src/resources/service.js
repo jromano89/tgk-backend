@@ -232,7 +232,13 @@ const RESOURCE_DEFINITIONS = {
     buildListOptions(filters = {}) {
       return buildTextSearch(['display_name', 'email', 'title', 'id'], filters.search);
     },
-    normalizeWrite: normalizeEmployeeWrite
+    normalizeWrite: normalizeEmployeeWrite,
+    allowDelete: true,
+    beforeDelete(db, appSlug, recordId) {
+      db.prepare('UPDATE customers SET employee_id = NULL, updated_at = CURRENT_TIMESTAMP WHERE app_slug = ? AND employee_id = ?').run(appSlug, recordId);
+      db.prepare('UPDATE transactions SET employee_id = NULL, updated_at = CURRENT_TIMESTAMP WHERE app_slug = ? AND employee_id = ?').run(appSlug, recordId);
+      db.prepare('UPDATE tasks SET employee_id = NULL, updated_at = CURRENT_TIMESTAMP WHERE app_slug = ? AND employee_id = ?').run(appSlug, recordId);
+    }
   },
   customers: {
     table: 'customers',
@@ -272,7 +278,8 @@ const RESOURCE_DEFINITIONS = {
         buildTextSearch(['name', 'id'], filters.search)
       );
     },
-    normalizeWrite: normalizeTransactionWrite
+    normalizeWrite: normalizeTransactionWrite,
+    allowDelete: true
   },
   tasks: {
     table: 'tasks',

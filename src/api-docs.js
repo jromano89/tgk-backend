@@ -53,9 +53,9 @@ const API_ROUTES = [
     query: [{ name: 'app', required: true, description: 'App slug.' }],
     eventStream: true
   },
-  ...resourceRoutes('employees', { canDelete: false }),
+  ...resourceRoutes('employees', { canDelete: true }),
   ...resourceRoutes('customers', { canDelete: true }),
-  ...resourceRoutes('transactions', { canDelete: false }),
+  ...resourceRoutes('transactions', { canDelete: true }),
   ...resourceRoutes('tasks', { canDelete: true }),
   {
     method: 'GET',
