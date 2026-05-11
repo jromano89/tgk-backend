@@ -54,7 +54,7 @@ a.alt:hover{background:rgba(255,255,255,.1)}
 <body><div class="c">
 <div class="eyebrow">Reusable Demo Backend</div>
 <h1>${API_TITLE}</h1>
-<p>CORS-enabled backend for DocuSign IAM demo portals. TGK Wealth is the current FINS implementation, but the service is structured to support future static demo frontends without rebuilding auth, proxying, storage, and Maestro plumbing each time.</p>
+<p>CORS-enabled backend for Docusign IAM demo portals. TGK Wealth is the current FINS implementation, but the service is structured to support future static demo frontends without rebuilding auth, proxying, storage, and Maestro plumbing each time.</p>
 <p>Demo data routes can be scoped with <code>?app=...</code> or <code>X-Demo-App</code> when multiple demos share one backend.</p>
 <div class="links">
 <a href="/api/health">Health Check</a>

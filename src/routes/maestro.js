@@ -17,7 +17,7 @@ const config = appConfig.maestro;
 const INFO_TEXT_ROUTES = {
   '/support': 'TGK Maestro support.',
   '/privacy': 'Demo-only Maestro bridge for local and private testing.',
-  '/terms': 'Demo-only Maestro bridge for DocuSign extension app testing.'
+  '/terms': 'Demo-only Maestro bridge for Docusign extension app testing.'
 };
 
 function trimTrailingSlash(value) {
