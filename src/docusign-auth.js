@@ -1,11 +1,12 @@
 const crypto = require('crypto');
+const { config } = require('./config');
 
 function getOauthBase() {
-  return process.env.DOCUSIGN_OAUTH_BASE || 'account-d.docusign.com';
+  return config.docusign.oauthBase;
 }
 
 function getIntegrationKey() {
-  const value = String(process.env.DOCUSIGN_INTEGRATION_KEY || '').trim();
+  const value = config.docusign.integrationKey;
   if (!value) {
     throw new Error('Missing DOCUSIGN_INTEGRATION_KEY');
   }
@@ -14,7 +15,7 @@ function getIntegrationKey() {
 }
 
 function getPrivateKey() {
-  const value = String(process.env.DOCUSIGN_RSA_PRIVATE_KEY || '').trim();
+  const value = config.docusign.rsaPrivateKey;
   if (!value) {
     throw new Error('Missing DOCUSIGN_RSA_PRIVATE_KEY');
   }

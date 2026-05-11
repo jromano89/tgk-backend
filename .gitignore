@@ -1,6 +1,8 @@
 .DS_Store
 node_modules/
 *.bak-*
-backend/.env
+.env
 .local/
-backend/data/*.db*
+data/*.db
+data/*.db-shm
+data/*.db-wal

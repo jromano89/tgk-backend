@@ -1,9 +1,10 @@
 const fs = require('fs');
 const path = require('path');
-const { config } = require('./config');
+const { config: appConfig } = require('../config');
 
 const templatePath = path.join(__dirname, 'manifest', 'clientCredentials.ReadWriteManifest.template.json');
 const templateContent = fs.readFileSync(templatePath, 'utf8');
+const config = appConfig.maestro;
 
 function buildManifest(publicBaseUrl) {
   const replacements = {

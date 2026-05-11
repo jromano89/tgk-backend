@@ -1,18 +1,10 @@
 const path = require('path');
-const dotenv = require('dotenv');
 const express = require('express');
 const { buildApiSpec, buildDocsHtml } = require('./api-docs');
 const { getDb } = require('./database');
-const API_TITLE = 'TGK Demo Backend';
+const { isDocusignConfigured } = require('./config');
+const API_TITLE = 'TGK Back';
 const API_VERSION = '3.0.0';
-
-// Load both repo-root .env and backend/.env for local runs; existing env vars still win.
-dotenv.config({ path: path.resolve(process.cwd(), '.env') });
-dotenv.config({ path: path.resolve(__dirname, '..', '.env') });
-
-function isDocusignConfigured() {
-  return Boolean(process.env.DOCUSIGN_INTEGRATION_KEY && process.env.DOCUSIGN_RSA_PRIVATE_KEY);
-}
 
 function setOpenCorsHeaders(req, res, next) {
   res.set('Access-Control-Allow-Origin', '*');
@@ -37,7 +29,7 @@ function createApp() {
   app.use('/api/proxy', require('./routes/proxy'));
   app.use('/architecture', express.static(path.resolve(__dirname, '..', 'public', 'architecture')));
   app.get('/favicon.ico', (req, res) => {
-    res.sendFile(path.resolve(__dirname, '..', '..', 'frontend', 'shared', 'favicon.ico'));
+    res.sendFile(path.resolve(__dirname, '..', 'public', 'favicon.ico'));
   });
 
   app.use(express.json({ limit: '1mb' }));

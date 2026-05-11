@@ -2,7 +2,7 @@ const express = require('express');
 const { getDb } = require('../database');
 const resourceService = require('../resources/service');
 const { createError, requireSlugValue } = require('../utils');
-const { config } = require('../maestro/config');
+const { config: appConfig } = require('../config');
 const { setResourceAccess } = require('../maestro/resource-client');
 const { buildManifest } = require('../maestro/manifest');
 const {
@@ -12,6 +12,7 @@ const {
 } = require('../maestro/dataio-registry');
 
 const router = express.Router();
+const config = appConfig.maestro;
 
 const INFO_TEXT_ROUTES = {
   '/support': 'TGK Maestro support.',

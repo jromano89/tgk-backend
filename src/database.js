@@ -1,8 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const Database = require('better-sqlite3');
-
-const DEFAULT_DB_PATH = path.resolve(__dirname, '..', 'data', 'demo.db');
+const { config } = require('./config');
 
 const TABLE_DEFINITIONS = {
   employees: {
@@ -94,15 +93,7 @@ let activeDbPath = null;
 let activeConfiguredDbPath = null;
 
 function resolveConfiguredDbPath() {
-  const configuredPath = String(process.env.TGK_DB_PATH || '').trim();
-
-  if (!configuredPath) {
-    return DEFAULT_DB_PATH;
-  }
-
-  return path.isAbsolute(configuredPath)
-    ? configuredPath
-    : path.resolve(__dirname, '..', configuredPath);
+  return config.database.path;
 }
 
 function getDbPath() {
@@ -132,18 +123,12 @@ function getDb() {
 
   try {
     db = initializeDb(configuredDbPath);
-    activeDbPath = configuredDbPath;
-    activeConfiguredDbPath = configuredDbPath;
   } catch (error) {
-    if (configuredDbPath === DEFAULT_DB_PATH) {
-      throw error;
-    }
-
-    console.warn(`Unable to use TGK_DB_PATH at ${configuredDbPath}; falling back to ${DEFAULT_DB_PATH}.`);
-    db = initializeDb(DEFAULT_DB_PATH);
-    activeDbPath = DEFAULT_DB_PATH;
-    activeConfiguredDbPath = configuredDbPath;
+    throw new Error(`Unable to initialize SQLite database at ${configuredDbPath}: ${error.message}`, { cause: error });
   }
+
+  activeDbPath = configuredDbPath;
+  activeConfiguredDbPath = configuredDbPath;
 
   return db;
 }

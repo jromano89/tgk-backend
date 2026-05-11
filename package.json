@@ -1,13 +1,14 @@
 {
-  "name": "tgk-demo",
+  "name": "tgk-back",
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "postinstall": "npm install --prefix backend && npm install --prefix frontend",
-    "start": "npm run dev",
-    "frontend": "npm --prefix frontend start",
-    "backend": "npm --prefix backend run dev",
-    "dev": "node scripts/dev.js",
-    "seed": "node scripts/seed-demo-api.js"
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.0.0",
+    "dotenv": "^16.4.0",
+    "express": "^4.21.0"
   }
 }
