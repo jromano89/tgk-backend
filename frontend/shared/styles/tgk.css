@@ -4404,3 +4404,208 @@ table {
   }
 
 }
+
+/* ============================================================
+   Configurator launcher (instance + workflow selection).
+   Classes used by index.html and shared/js/tgk-launcher.js.
+   Dark-surface theme; matches .hero / .hero-kicker above.
+   ============================================================ */
+
+.hero-accent-iam {
+  color: var(--tgk-poppy)
+}
+
+.configurator {
+  display: grid;
+  gap: 1.4rem;
+  width: min(860px,calc(100% - 1.5rem));
+  margin: 0.4rem auto 0;
+  padding: 0 0 0.4rem
+}
+
+.configurator-section {
+  display: grid;
+  gap: 0.7rem
+}
+
+.section-label {
+  margin: 0;
+  color: rgba(237,232,255,0.92);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em
+}
+
+.option-grid {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 0.7rem
+}
+
+.option-grid[data-columns="3"] {
+  grid-template-columns: repeat(3,minmax(0,1fr))
+}
+
+.option-grid[data-columns="1"] {
+  grid-template-columns: 1fr
+}
+
+.option-card {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  padding: 0.85rem 0.9rem;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 0.8rem;
+  background: rgba(255,255,255,0.05);
+  color: var(--tgk-white);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 160ms ease,border-color 160ms ease,background 160ms ease,box-shadow 160ms ease
+}
+
+.option-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(143,114,255,0.55);
+  background: rgba(255,255,255,0.08)
+}
+
+.option-card:focus-visible {
+  outline: 3px solid rgba(146,122,255,0.5);
+  outline-offset: 2px
+}
+
+.option-card.is-selected {
+  border-color: var(--tgk-cobalt-bright);
+  background: rgba(76,0,255,0.18);
+  box-shadow: inset 0 0 0 1px var(--tgk-cobalt-bright)
+}
+
+.card-icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  width: 2.4rem;
+  height: 2.4rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.6rem;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: var(--tgk-white)
+}
+
+.card-icon svg {
+  display: block;
+  width: 1.4rem;
+  height: 1.4rem
+}
+
+.option-card.is-selected .card-icon {
+  background: rgba(76,0,255,0.28);
+  border-color: rgba(143,114,255,0.6)
+}
+
+.card-copy {
+  display: grid;
+  gap: 0.12rem;
+  min-width: 0
+}
+
+.card-title {
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: -0.01em
+}
+
+.card-subtitle {
+  color: rgba(237,232,255,0.68);
+  font-size: 0.74rem;
+  line-height: 1.3
+}
+
+.launcher-loading {
+  grid-column: 1 / -1;
+  padding: 1rem;
+  color: rgba(237,232,255,0.6);
+  font-size: 0.82rem;
+  text-align: center
+}
+
+.launch-panel {
+  display: grid;
+  gap: 0.7rem;
+  margin-top: 0.4rem
+}
+
+.launch-cta,
+.launch-cta-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.78rem 1.1rem;
+  border-radius: 0.7rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  transition: transform 160ms ease,box-shadow 160ms ease,background 160ms ease,border-color 160ms ease
+}
+
+.launch-cta {
+  background: var(--tgk-cobalt);
+  color: var(--tgk-white);
+  box-shadow: 0 10px 26px rgba(76,0,255,0.34)
+}
+
+.launch-cta:hover {
+  transform: translateY(-2px);
+  background: #3a00cb;
+  box-shadow: 0 14px 30px rgba(76,0,255,0.42)
+}
+
+.launch-cta-secondary {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.18);
+  color: var(--tgk-white)
+}
+
+.launch-cta-secondary:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255,255,255,0.34);
+  background: rgba(255,255,255,0.1)
+}
+
+.launch-cta:focus-visible,
+.launch-cta-secondary:focus-visible {
+  outline: 3px solid rgba(146,122,255,0.5);
+  outline-offset: 2px
+}
+
+.footer-links {
+  display: flex;
+  justify-content: center;
+  gap: 0.8rem;
+  margin-top: 0.1rem
+}
+
+.footer-links a {
+  color: #ffffff;
+  font-size: 0.74rem;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 170ms ease
+}
+
+.footer-links a:hover {
+  border-color: rgba(255,255,255,0.34)
+}
+
+@media (max-width:640px) {
+  .option-grid,
+  .option-grid[data-columns="3"] {
+    grid-template-columns: 1fr
+  }
+
+}
