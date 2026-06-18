@@ -4609,3 +4609,164 @@ table {
   }
 
 }
+
+/* ============================================================
+   Enterprise skin — conservative, flat, square theme scoped to
+   the generic CRM/ERP portals via body.tgk-skin-enterprise.
+   settings-panel.js sets the brand vars inline on <body>, so this
+   skin overrides concrete properties with literal neutral values
+   rather than relying on the --color-* custom properties.
+   Palette: charcoal chrome, flat gray canvas, single steel accent.
+   ============================================================ */
+
+/* Canvas — flat neutral gray, no gradient wash */
+.tgk-skin-enterprise.tgk-portal-body {
+  background-image: none;
+  background-color: #ebedf0
+}
+
+/* Sidebar — flat charcoal, square */
+.tgk-skin-enterprise .tgk-portal-sidebar {
+  background: #1f2630;
+  border-right: 1px solid #121821
+}
+
+.tgk-skin-enterprise .tgk-portal-brand__mark {
+  border-radius: 4px;
+  background: #34557a;
+  box-shadow: none
+}
+
+.tgk-skin-enterprise .tgk-portal-nav__item {
+  border-radius: 4px
+}
+
+.tgk-skin-enterprise .tgk-portal-nav__item--active {
+  background: rgba(255,255,255,0.07);
+  border-color: rgba(255,255,255,0.12);
+  border-left: 2px solid #6b93c4;
+  box-shadow: none;
+  color: #fff
+}
+
+.tgk-skin-enterprise .tgk-portal-user__avatar {
+  border-radius: 4px
+}
+
+/* Panels & cards — white, 1px border, flat, square */
+.tgk-skin-enterprise .tgk-surface-panel {
+  background: #ffffff;
+  border: 1px solid #d8dce2;
+  border-radius: 4px;
+  box-shadow: none
+}
+
+.tgk-skin-enterprise .tgk-account-card,
+.tgk-skin-enterprise .tgk-record-row,
+.tgk-skin-enterprise .tgk-agreements-kpi-card,
+.tgk-skin-enterprise .tgk-agreements-panel,
+.tgk-skin-enterprise .tgk-profile-card,
+.tgk-skin-enterprise .tgk-modal-card {
+  border-radius: 4px;
+  box-shadow: none
+}
+
+.tgk-skin-enterprise .tgk-account-card {
+  border: 1px solid #e2e5ea;
+  background: #fbfcfd
+}
+
+/* KPI — white, 1px border, single steel accent stripe, sans tabular value */
+.tgk-skin-enterprise .tgk-kpi {
+  background: #ffffff;
+  border: 1px solid #d8dce2;
+  border-left: 3px solid #34557a;
+  border-radius: 4px;
+  box-shadow: none
+}
+
+.tgk-skin-enterprise .tgk-kpi__value {
+  font-family: var(--tgk-font-sans,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em
+}
+
+/* Neutralize the rainbow KPI tone-borders into one steel accent */
+.tgk-skin-enterprise .tgk-tone-border--neutral,
+.tgk-skin-enterprise .tgk-tone-border--amber,
+.tgk-skin-enterprise .tgk-tone-border--red,
+.tgk-skin-enterprise .tgk-tone-border--blue,
+.tgk-skin-enterprise .tgk-tone-border--sky,
+.tgk-skin-enterprise .tgk-tone-border--violet,
+.tgk-skin-enterprise .tgk-tone-border--emerald {
+  border-left-color: #34557a
+}
+
+/* Buttons — flat, square, restrained steel */
+.tgk-skin-enterprise .tgk-button {
+  border-radius: 3px
+}
+
+.tgk-skin-enterprise .tgk-button--primary {
+  background: #34557a;
+  border-color: #294156;
+  box-shadow: none
+}
+
+.tgk-skin-enterprise .tgk-button--primary:hover {
+  background: #2b4767;
+  border-color: #21384c;
+  box-shadow: none
+}
+
+.tgk-skin-enterprise .tgk-button--secondary {
+  box-shadow: none
+}
+
+/* Tables — grid dividers, neutral hover, square avatars */
+.tgk-skin-enterprise .tgk-data-table__row {
+  border-bottom: 1px solid #e8eaef
+}
+
+.tgk-skin-enterprise .tgk-data-table__row:nth-child(even) {
+  background: transparent
+}
+
+.tgk-skin-enterprise .tgk-data-table__row:hover {
+  background: #f2f5f8
+}
+
+.tgk-skin-enterprise .tgk-data-table__avatar,
+.tgk-skin-enterprise .tgk-profile-card__avatar {
+  border-radius: 4px
+}
+
+/* Uniform slate avatars (data-driven/brand colors are set inline → !important) */
+.tgk-skin-enterprise .tgk-data-table__avatar,
+.tgk-skin-enterprise .tgk-profile-card__avatar,
+.tgk-skin-enterprise .tgk-portal-user__avatar {
+  background: #5b6573 !important;
+  color: #ffffff
+}
+
+/* Status — square, muted, uppercase tag */
+.tgk-skin-enterprise .tgk-status-badge {
+  border-radius: 3px;
+  padding: 3px 7px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase
+}
+
+/* Inputs & search — square */
+.tgk-skin-enterprise .tgk-form-input,
+.tgk-skin-enterprise .tgk-search-field {
+  border-radius: 3px
+}
+
+/* Headings — tighter, businesslike */
+.tgk-skin-enterprise .tgk-page-title {
+  font-weight: 600;
+  letter-spacing: -0.01em
+}
