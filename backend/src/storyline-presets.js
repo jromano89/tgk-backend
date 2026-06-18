@@ -16,10 +16,97 @@ const VERTICALS = [
   { key: 'wealth', title: 'Wealth Management', desc: 'Advisors & investors', icon: 'trending-up' },
   { key: 'public-sector', title: 'Public Sector', desc: 'Agencies & constituents', icon: 'landmark' },
   { key: 'banking', title: 'Banking', desc: 'Lenders & borrowers', icon: 'building-2' },
-  { key: 'education', title: 'Education', desc: 'Institutions & students', icon: 'graduation-cap' }
+  { key: 'education', title: 'Education', desc: 'Institutions & students', icon: 'graduation-cap' },
+  { key: 'crm', title: 'CRM', desc: 'Sales teams & contacts', icon: 'contact' },
+  { key: 'erp', title: 'ERP', desc: 'Operations & vendors', icon: 'building-2' }
 ];
 
 const STORYLINE_PRESETS = [
+  // ── Generic CRM ─────────────────────────────────────────────
+  {
+    key: 'crm',
+    vertical: 'crm',
+    title: 'CRM',
+    description: 'Generic B2B sales CRM — contacts, companies, deal pipeline, and e-signed agreements.',
+    highlightedProducts: ['doc-gen', 'web-forms', 'id-verification'],
+    brandColor: '#7c3aed',
+    portalName: 'Acme CRM',
+    terminology: {
+      advisorRole: 'Account Manager', advisorRolePlural: 'Account Managers',
+      clientRole: 'Contact', clientRolePlural: 'Contacts',
+      advisorPortalLabel: 'CRM Portal', clientPortalLabel: 'Contact Portal',
+      clientBookLabel: 'Contacts & Companies',
+      onboardingAction: 'New Contact', onboardingWorkflowLabel: 'Contact Onboarding',
+      maintenanceAction: 'Update Deal', maintenanceWorkflowLabel: 'Deal Update',
+      dealLabel: 'Deal', dealPluralLabel: 'Deals', activityPluralLabel: 'Activities'
+    },
+    kpis: {
+      advisor: [
+        { key: 'pipeline', label: 'Total Pipeline', format: 'currency', computeFrom: 'accounts.balance', aggregate: 'sum', trend: '+8.4% this quarter' },
+        { key: 'openDeals', label: 'Open Deals', format: 'number', trend: 'Active opportunities' },
+        { key: 'activeContacts', label: 'Active Contacts', format: 'number', computeFrom: 'status', aggregate: 'countWhere', countWhereValue: 'active', trend: 'In your book' },
+        { key: 'alerts', label: 'Needs Attention', format: 'number', computeFrom: 'status', aggregate: 'countWhere', countWhereValue: 'review', trend: 'Deals to review' }
+      ],
+      client: [
+        { key: 'dealValue', label: 'Deal Value', format: 'currency', computeFrom: 'accounts.balance', aggregate: 'sum' },
+        { key: 'stage', label: 'Stage', format: 'text', computeFrom: 'data.authStatus', aggregate: 'first' }
+      ]
+    },
+    agreements: {
+      taxonomy: [
+        { type: 'proposal', label: 'Proposal', icon: 'file-text' },
+        { type: 'msa', label: 'MSA', icon: 'shield' },
+        { type: 'order-form', label: 'Order Form', icon: 'folder-plus' },
+        { type: 'nda', label: 'NDA', icon: 'users' },
+        { type: 'renewal', label: 'Renewal', icon: 'arrow-right-left' }
+      ],
+      summaryMetrics: { totalCount: 86, completionRate: 91 },
+      turnaroundHours: 3.4,
+      volumeSeries: [6, 8, 7, 9, 11, 10, 13, 12, 15, 14, 17, 19]
+    }
+  },
+  // ── Generic ERP ─────────────────────────────────────────────
+  {
+    key: 'erp',
+    vertical: 'erp',
+    title: 'ERP',
+    description: 'Generic operations ERP — vendors, purchase orders, invoices, and approval workflows.',
+    highlightedProducts: ['doc-gen', 'workspaces', 'monitor'],
+    brandColor: '#0f766e',
+    portalName: 'Acme Operations',
+    terminology: {
+      advisorRole: 'Operations User', advisorRolePlural: 'Operations Team',
+      clientRole: 'Vendor', clientRolePlural: 'Vendors',
+      advisorPortalLabel: 'ERP Portal', clientPortalLabel: 'Vendor Portal',
+      clientBookLabel: 'Vendors & Suppliers',
+      onboardingAction: 'Add Vendor', onboardingWorkflowLabel: 'Vendor Onboarding',
+      maintenanceAction: 'New Vendor Agreement', maintenanceWorkflowLabel: 'Vendor Agreement'
+    },
+    kpis: {
+      advisor: [
+        { key: 'openOrders', label: 'Open Orders', format: 'number', trend: 'In fulfillment' },
+        { key: 'orderValue', label: 'Order Value', format: 'currency', trend: '+5.1% this quarter' },
+        { key: 'pendingApprovals', label: 'Pending Approvals', format: 'number', trend: 'Awaiting sign-off' },
+        { key: 'alerts', label: 'Needs Attention', format: 'number', computeFrom: 'status', aggregate: 'countWhere', countWhereValue: 'review', trend: 'Vendors to review' }
+      ],
+      client: [
+        { key: 'orderValue', label: 'Order Value', format: 'currency', computeFrom: 'accounts.balance', aggregate: 'sum' },
+        { key: 'status', label: 'Status', format: 'text', computeFrom: 'status', aggregate: 'first' }
+      ]
+    },
+    agreements: {
+      taxonomy: [
+        { type: 'purchase-order', label: 'Purchase Order', icon: 'folder-plus' },
+        { type: 'invoice', label: 'Invoice', icon: 'file-text' },
+        { type: 'vendor-agreement', label: 'Vendor Agreement', icon: 'shield' },
+        { type: 'quality-cert', label: 'Quality Certification', icon: 'users' },
+        { type: 'delivery-receipt', label: 'Delivery Receipt', icon: 'arrow-right-left' }
+      ],
+      summaryMetrics: { totalCount: 112, completionRate: 88 },
+      turnaroundHours: 5.6,
+      volumeSeries: [9, 11, 10, 13, 12, 15, 14, 16, 18, 17, 20, 22]
+    }
+  },
   // ── Healthcare ──────────────────────────────────────────────
   {
     key: 'patient-intake',
@@ -756,6 +843,84 @@ function buildProfileFromDescriptor(desc, slugOverride) {
 // ---------------------------------------------------------------------------
 
 const SEED_DESCRIPTORS = {
+  crm: {
+    prefix: 'crm', workflow: 'deal',
+    employees: [
+      { name: 'Jordan Hayes', email: 'j.hayes@acmecrm.com', phone: '(415) 555-0140', title: 'Senior Account Manager' },
+      { name: 'Riley Chen', email: 'r.chen@acmecrm.com', phone: '(415) 555-0141', title: 'Sales Associate' }
+    ],
+    customers: [
+      { name: 'Sarah Lin', email: 'sarah.lin@northwindtraders.com', phone: '(212) 555-0101', org: 'Northwind Traders', status: 'active', value: 60000, authStatus: 'Negotiation', accounts: [
+        { name: 'Enterprise License', type: 'New Business', value: 48000, extra: { status: 'Negotiation' } },
+        { name: 'Onboarding Services', type: 'Services', value: 12000, extra: { status: 'Proposal' } }
+      ] },
+      { name: 'Marcus Webb', email: 'marcus.webb@globex.com', phone: '(312) 555-0102', org: 'Globex Corporation', status: 'review', value: 95000, authStatus: 'Closed Won', accounts: [
+        { name: 'Platform Renewal', type: 'Renewal', value: 72000, extra: { status: 'Closed Won' } },
+        { name: 'Add-on Seats', type: 'Expansion', value: 23000, extra: { status: 'Negotiation' } }
+      ] },
+      { name: 'Priya Nair', email: 'priya.nair@initech.com', phone: '(617) 555-0103', org: 'Initech', status: 'pending', value: 30000, authStatus: 'Prospecting', accounts: [
+        { name: 'Pilot Program', type: 'New Business', value: 18000, extra: { status: 'Prospecting' } },
+        { name: 'Training Package', type: 'Services', value: 12000, extra: { status: 'Proposal' } }
+      ] },
+      { name: 'Diego Alvarez', email: 'diego.alvarez@soylent.com', phone: '(206) 555-0104', org: 'Soylent Industries', status: 'active', value: 140000, authStatus: 'Negotiation', accounts: [
+        { name: 'Enterprise Suite', type: 'New Business', value: 110000, extra: { status: 'Negotiation' } },
+        { name: 'Premium Support', type: 'Services', value: 30000, extra: { status: 'Closed Won' } }
+      ] }
+    ],
+    envelopes: [
+      { name: 'Northwind Traders — Proposal', status: 'completed' },
+      { name: 'Globex — Master Service Agreement', status: 'sent' },
+      { name: 'Initech — Order Form', status: 'delivered' },
+      { name: 'Soylent — Mutual NDA', status: 'completed' },
+      { name: 'Globex — Renewal Agreement', status: 'completed' }
+    ],
+    tasks: [
+      { title: 'Follow up with {customer}', desc: 'Send follow-up notes to {customer} after the discovery call.' },
+      { title: 'Send proposal to {customer}', desc: 'Prepare and send the proposal to {customer}.' },
+      { title: 'Schedule demo for {customer}', desc: 'Book a product demo with {customer}.' },
+      { title: 'Renewal check-in with {customer}', desc: 'Confirm renewal terms with {customer}.' }
+    ]
+  },
+
+  erp: {
+    prefix: 'erp', workflow: 'order',
+    employees: [
+      { name: 'Morgan Diaz', email: 'm.diaz@acmeops.com', phone: '(480) 555-0150', title: 'Operations Manager' },
+      { name: 'Sam Okoro', email: 's.okoro@acmeops.com', phone: '(480) 555-0151', title: 'Procurement Specialist' }
+    ],
+    customers: [
+      { name: 'Atlas Components', email: 'orders@atlascomponents.com', phone: '(510) 555-0201', org: 'Electronics', status: 'active', value: 21000, accounts: [
+        { name: 'PO-10482', type: 'Components', value: 12400, extra: { status: 'Open' } },
+        { name: 'PO-10455', type: 'Components', value: 8600, extra: { status: 'Fulfilled' } }
+      ] },
+      { name: 'Pacific Freight', email: 'dispatch@pacificfreight.com', phone: '(503) 555-0202', org: 'Logistics', status: 'review', value: 32000, accounts: [
+        { name: 'PO-10460', type: 'Freight', value: 18000, extra: { status: 'In Transit' } },
+        { name: 'PO-10448', type: 'Freight', value: 14000, extra: { status: 'Fulfilled' } }
+      ] },
+      { name: 'Summit Materials', email: 'sales@summitmaterials.com', phone: '(801) 555-0203', org: 'Raw Materials', status: 'pending', value: 88000, accounts: [
+        { name: 'PO-10491', type: 'Steel', value: 64000, extra: { status: 'Open' } },
+        { name: 'PO-10470', type: 'Steel', value: 24000, extra: { status: 'Approved' } }
+      ] },
+      { name: 'Vertex Packaging', email: 'orders@vertexpackaging.com', phone: '(414) 555-0204', org: 'Packaging', status: 'active', value: 21000, accounts: [
+        { name: 'PO-10502', type: 'Packaging', value: 13500, extra: { status: 'Open' } },
+        { name: 'PO-10488', type: 'Packaging', value: 7500, extra: { status: 'Fulfilled' } }
+      ] }
+    ],
+    envelopes: [
+      { name: 'Atlas Components — Master Supply Agreement', status: 'completed' },
+      { name: 'Invoice INV-2047 — Atlas Components', status: 'sent' },
+      { name: 'Purchase Order PO-10491 — Summit Materials', status: 'delivered' },
+      { name: 'Pacific Freight — Quality Certification', status: 'completed' },
+      { name: 'Vertex Packaging — Delivery Receipt', status: 'completed' }
+    ],
+    tasks: [
+      { title: 'Approve PO for {customer}', desc: 'Review and approve the open purchase order for {customer}.' },
+      { title: 'Review invoice from {customer}', desc: 'Verify the latest invoice from {customer} against the PO.' },
+      { title: 'Sign agreement with {customer}', desc: 'Countersign the supply agreement with {customer}.' },
+      { title: 'Approve payment to {customer}', desc: 'Authorize payment for fulfilled orders from {customer}.' }
+    ]
+  },
+
   'patient-intake': {
     prefix: 'pi', workflow: 'patient-intake',
     employees: [

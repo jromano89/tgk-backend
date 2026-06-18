@@ -10,17 +10,16 @@ const router = express.Router();
 let _seededOnce = false;
 
 function ensureSeeded(db) {
-  const count = db.prepare('SELECT COUNT(*) as n FROM instances').get().n;
-  if (count === 0) {
+  // Insert any missing default instances once per boot. INSERT OR IGNORE keeps
+  // this idempotent and lets newly-added defaults (e.g. crm/erp) appear on an
+  // existing database without disturbing user-created or edited instances.
+  if (!_seededOnce) {
+    _seededOnce = true;
+
     const insert = db.prepare('INSERT OR IGNORE INTO instances (slug, config) VALUES (?, ?)');
     for (const [slug, config] of Object.entries(DEFAULT_INSTANCES)) {
       insert.run(slug, JSON.stringify(config));
     }
-  }
-
-  // Backfill seed data for any preset-based instances that are missing data (once per boot)
-  if (!_seededOnce) {
-    _seededOnce = true;
     const rows = db.prepare('SELECT slug, config FROM instances').all();
     for (const row of rows) {
       try {
@@ -65,7 +64,8 @@ function seedInstance(db, slug, config) {
 
   for (const emp of profile.employees) createRecordForApp(db, slug, 'employees', emp);
   for (const cust of profile.customers) createRecordForApp(db, slug, 'customers', cust);
-  for (const env of profile.envelopes) createRecordForApp(db, slug, 'envelopes', env);
+  // 'envelopes' was renamed to the 'transactions' resource; type defaults to 'envelope'.
+  for (const env of profile.envelopes) createRecordForApp(db, slug, 'transactions', env);
   for (const t of profile.tasks) createRecordForApp(db, slug, 'tasks', t);
   return true;
 }

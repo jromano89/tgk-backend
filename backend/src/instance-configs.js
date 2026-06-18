@@ -1,5 +1,7 @@
 // Default instance configurations that are seeded on first run.
 
+const { PRESETS_BY_KEY, buildConfigFromPreset } = require('./storyline-presets');
+
 const WEALTH_CONFIG = {
   metadata: {
     name: 'TGK Wealth',
@@ -154,9 +156,16 @@ const HEALTHCARE_CONFIG = {
   }
 };
 
+// Generic CRM/ERP configs are derived from their storyline presets so the
+// two stay in sync (terminology, KPIs, agreements, branding, presetKey).
+const CRM_CONFIG = buildConfigFromPreset(PRESETS_BY_KEY.crm);
+const ERP_CONFIG = buildConfigFromPreset(PRESETS_BY_KEY.erp);
+
 const DEFAULT_INSTANCES = {
   'tgk-wealth': WEALTH_CONFIG,
-  'medflow-health': HEALTHCARE_CONFIG
+  'medflow-health': HEALTHCARE_CONFIG,
+  crm: CRM_CONFIG,
+  erp: ERP_CONFIG
 };
 
-module.exports = { DEFAULT_INSTANCES, WEALTH_CONFIG, HEALTHCARE_CONFIG };
+module.exports = { DEFAULT_INSTANCES, WEALTH_CONFIG, HEALTHCARE_CONFIG, CRM_CONFIG, ERP_CONFIG };

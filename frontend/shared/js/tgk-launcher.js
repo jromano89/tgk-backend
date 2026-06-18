@@ -65,6 +65,8 @@
     const primaryLabel = document.getElementById('primary-portal-label');
     const secondaryLink = document.getElementById('secondary-portal-link');
     const secondaryLabel = document.getElementById('secondary-portal-label');
+    const crmLink = document.getElementById('crm-portal-link');
+    const erpLink = document.getElementById('erp-portal-link');
     const instanceGrid = document.getElementById('instance-grid');
     const onboardingLabel = document.getElementById('onboarding-label');
     const onboardingSubtitle = document.getElementById('onboarding-subtitle');
@@ -122,6 +124,12 @@
 
       if (secondaryLink) secondaryLink.href = `${instancePrefix}${secondaryRoute}?mode=advanced`;
       if (secondaryLabel) secondaryLabel.textContent = `Open ${secondaryPortalLabel} \u2192`;
+
+      // Generic CRM/ERP portals are standalone archetypes with their own
+      // seeded data/vocabulary — they always open bare (never instance-scoped),
+      // so they speak CRM/ERP language regardless of the selected instance.
+      if (crmLink) crmLink.href = 'crm/?mode=advanced';
+      if (erpLink) erpLink.href = 'erp/?mode=advanced';
     }
 
     function bindOptionClicks() {

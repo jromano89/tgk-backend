@@ -1,0 +1,599 @@
+<div class="tgk-portal-shell" x-data="crmApp()">
+
+  <!-- Sidebar -->
+  <aside class="tgk-portal-sidebar" :class="{ 'tgk-portal-sidebar--collapsed': sidebarCollapsed }">
+    <!-- Logo -->
+    <div class="tgk-portal-brand" @click="sidebarCollapsed = !sidebarCollapsed">
+      <div class="tgk-portal-brand__mark" x-text="brandingInitial"></div>
+      <div x-show="!sidebarCollapsed" class="tgk-portal-brand__copy">
+        <div class="tgk-portal-brand__title" x-text="brandingAppName"></div>
+        <div class="tgk-portal-brand__meta" x-text="t.advisorPortalLabel"></div>
+      </div>
+    </div>
+
+    <!-- Nav -->
+    <nav class="tgk-portal-nav">
+      <div x-show="!sidebarCollapsed" class="tgk-portal-nav__section">Core</div>
+
+      <button @click="goBack()"
+        class="tgk-portal-nav__item"
+        :class="{ 'tgk-portal-nav__item--active': view === 'dashboard', 'tgk-portal-nav__item--collapsed': sidebarCollapsed }">
+        <svg class="tgk-portal-nav__icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        <span x-show="!sidebarCollapsed" class="tgk-portal-nav__label">Dashboard</span>
+      </button>
+      <button @click="setView('deals')"
+        class="tgk-portal-nav__item"
+        :class="{ 'tgk-portal-nav__item--active': view === 'deals', 'tgk-portal-nav__item--collapsed': sidebarCollapsed }">
+        <svg class="tgk-portal-nav__icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8m0 0h-5m5 0v5"/></svg>
+        <span x-show="!sidebarCollapsed" class="tgk-portal-nav__label">Deals</span>
+      </button>
+      <button @click="setView('activities')"
+        class="tgk-portal-nav__item"
+        :class="{ 'tgk-portal-nav__item--active': view === 'activities', 'tgk-portal-nav__item--collapsed': sidebarCollapsed }">
+        <svg class="tgk-portal-nav__icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+        <span x-show="!sidebarCollapsed" class="tgk-portal-nav__label">Activities</span>
+      </button>
+      <button @click="setView('documents')"
+        class="tgk-portal-nav__item"
+        :class="{ 'tgk-portal-nav__item--active': view === 'documents', 'tgk-portal-nav__item--collapsed': sidebarCollapsed }">
+        <svg class="tgk-portal-nav__icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <span x-show="!sidebarCollapsed" class="tgk-portal-nav__label">Documents</span>
+      </button>
+
+      <div x-show="canSeeIamProducts()">
+        <div x-show="!sidebarCollapsed" class="tgk-portal-nav__section">IAM Products</div>
+        <div data-partial="../shared/partials/iam-products-nav.html"></div>
+      </div>
+
+      <div x-show="canSeeSettings()" class="tgk-portal-nav__divider"></div>
+
+      <button x-show="canSeeSettings()" @click="setView('settings')"
+        class="tgk-portal-nav__item"
+        :class="{ 'tgk-portal-nav__item--active': view === 'settings', 'tgk-portal-nav__item--collapsed': sidebarCollapsed }">
+        <svg class="tgk-portal-nav__icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+        <span x-show="!sidebarCollapsed" class="tgk-portal-nav__label">Configure</span>
+      </button>
+    </nav>
+
+    <div class="tgk-portal-note" x-show="!sidebarCollapsed">
+      <div class="tgk-portal-note__text">For demo purposes only</div>
+    </div>
+
+    <!-- User -->
+    <div class="tgk-portal-user">
+      <div class="tgk-portal-user__avatar" style="background: var(--color-brand, #3b5bdb);" x-text="initials(currentUser?.name || t.advisorRole)"></div>
+      <div x-show="!sidebarCollapsed" class="tgk-portal-user__copy">
+        <div class="tgk-portal-user__title" x-text="currentUser?.name || t.advisorRole"></div>
+        <div class="tgk-portal-user__meta" x-text="currentUser?.title || t.advisorRole"></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="tgk-main" :class="{ 'tgk-main--clipped': view === 'documents' }">
+
+    <!-- DASHBOARD VIEW -->
+    <div x-show="view === 'dashboard'" class="tgk-page-shell">
+      <div class="tgk-page-stack">
+        <div class="tgk-page-header">
+          <h1 class="tgk-page-title" x-text="t.advisorPortalLabel"></h1>
+          <div class="tgk-page-header__actions">
+            <label class="tgk-search-field">
+              <svg class="tgk-search-field__icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+              <input x-model="searchQuery" type="text" :placeholder="'Search ' + t.clientRolePlural.toLowerCase()" class="tgk-form-input tgk-search-field__input">
+            </label>
+            <button @click="openOnboarding()" class="tgk-button tgk-button--primary" x-text="t.onboardingAction"></button>
+          </div>
+        </div>
+
+        <div class="tgk-kpi-grid">
+          <template x-for="(kpi, kpiIdx) in kpiDefinitions" :key="kpi.key">
+            <section class="tgk-kpi" :class="['tgk-tone-border--sky','tgk-tone-border--emerald','tgk-tone-border--amber','tgk-tone-border--red'][kpiIdx % 4]">
+              <div class="tgk-kpi__label" x-text="kpi.label"></div>
+              <div class="tgk-kpi__value" x-text="formatKpi(kpi, computeKpi(kpi))"></div>
+              <div class="tgk-kpi__detail" x-text="kpi.trend || ''"></div>
+            </section>
+          </template>
+        </div>
+
+        <div class="tgk-surface-panel tgk-surface-panel--md">
+          <div class="tgk-panel-heading tgk-panel-heading--spaced">
+            <h2 class="tgk-panel-title" x-text="t.clientBookLabel"></h2>
+          </div>
+          <div class="tgk-data-table-shell">
+            <table class="tgk-data-table">
+              <thead>
+                <tr class="tgk-data-table__head-row">
+                  <th class="tgk-data-table__heading" x-text="t.clientRole"></th>
+                  <th class="tgk-data-table__heading">Company</th>
+                  <th class="tgk-data-table__heading">Pipeline</th>
+                  <th class="tgk-data-table__heading" x-text="t.dealPluralLabel"></th>
+                  <th class="tgk-data-table__heading">Status</th>
+                  <th class="tgk-data-table__heading tgk-data-table__heading--action"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="c in filteredCustomers" :key="c.id">
+                  <tr @click="viewClient(c)" class="tgk-data-table__row">
+                    <td class="tgk-data-table__cell">
+                      <div class="tgk-data-table__contact">
+                        <div class="tgk-data-table__avatar" :style="`background:${avatarColor(c.id || c.name)}`" x-text="initials(c.name)"></div>
+                        <div class="tgk-data-table__identity">
+                          <div class="tgk-data-table__name" x-text="c.name"></div>
+                          <div class="tgk-data-table__meta" x-text="c.email"></div>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="tgk-data-table__cell" x-text="c.company || '—'"></td>
+                    <td class="tgk-data-table__cell tgk-data-table__cell--numeric" x-text="fmtMoney(customerPortfolioValue(c))"></td>
+                    <td class="tgk-data-table__cell tgk-data-table__cell--numeric" x-text="customerAccounts(c).length"></td>
+                    <td class="tgk-data-table__cell">
+                      <span class="tgk-status-badge" :class="statusClasses(c.metadata?.status)" x-text="c.metadata?.status || 'active'"></span>
+                    </td>
+                    <td class="tgk-data-table__cell tgk-data-table__cell--action">
+                      <button @click.stop="deleteCustomer(c, $event)" class="tgk-data-table__remove" title="Remove">
+                        <svg class="tgk-icon tgk-icon--sm" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                      </button>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+          <template x-if="filteredCustomers.length === 0">
+            <div class="tgk-empty-panel tgk-empty-panel--compact">
+              <div class="tgk-empty-panel__icon">
+                <svg class="tgk-icon tgk-icon--lg tgk-icon--muted" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/></svg>
+              </div>
+              <div class="tgk-empty-panel__title" x-text="'No ' + t.clientRolePlural.toLowerCase() + ' yet'"></div>
+              <p class="tgk-empty-panel__copy">Use Maestro or the API to add records to the book.</p>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+
+    <!-- CLIENT DETAIL VIEW -->
+    <template x-if="view === 'client' && selectedContact">
+      <div class="tgk-page-shell">
+        <button @click="goBack()" class="tgk-back-link">
+          <svg class="tgk-icon tgk-icon--sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg>
+          Back to Dashboard
+        </button>
+
+        <div class="tgk-detail-layout">
+          <div class="tgk-detail-sidebar">
+            <div class="tgk-surface-panel tgk-surface-panel--md tgk-profile-card">
+              <div class="tgk-profile-card__avatar" :style="`background:${avatarColor(selectedContact.id || selectedContact.name)}`" x-text="initials(selectedContact.name)"></div>
+              <h2 class="tgk-profile-card__name" x-text="selectedContact.name"></h2>
+              <div class="tgk-profile-card__meta" x-text="selectedContact.company || t.clientRole"></div>
+              <span class="tgk-status-badge" :class="statusClasses(selectedContact.metadata?.status)" x-text="selectedContact.metadata?.status || 'active'"></span>
+              <div class="tgk-contact-list">
+                <div class="tgk-contact-row">
+                  <svg class="tgk-contact-row__icon" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"/></svg>
+                  <span x-text="selectedContact.phone || '—'"></span>
+                </div>
+                <div class="tgk-contact-row">
+                  <svg class="tgk-contact-row__icon" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg>
+                  <span x-text="selectedContact.email"></span>
+                </div>
+                <template x-if="selectedContact.company">
+                  <div class="tgk-contact-row">
+                    <svg class="tgk-contact-row__icon" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/></svg>
+                    <span x-text="selectedContact.company"></span>
+                  </div>
+                </template>
+              </div>
+            </div>
+            <section class="tgk-kpi tgk-tone-border--sky">
+              <div class="tgk-kpi__label">Pipeline Value</div>
+              <div class="tgk-kpi__value" x-text="fmtMoney(customerPortfolioValue(selectedContact))"></div>
+              <div class="tgk-kpi__detail" x-text="customerAccounts(selectedContact).length + ' open ' + t.dealPluralLabel.toLowerCase()"></div>
+            </section>
+          </div>
+
+          <div class="tgk-detail-main">
+            <div class="tgk-surface-panel tgk-surface-panel--md">
+              <div class="tgk-panel-heading tgk-panel-heading--spaced">
+                <h3 class="tgk-panel-title" x-text="t.dealPluralLabel"></h3>
+              </div>
+              <div class="tgk-account-grid">
+                <template x-for="acct in customerAccounts(selectedContact)" :key="acct.id">
+                  <div class="tgk-account-card">
+                    <div class="tgk-account-card__header">
+                      <div>
+                        <div class="tgk-account-card__title" x-text="accountName(acct)"></div>
+                        <div class="tgk-account-card__meta" x-text="accountLabel(acct)"></div>
+                      </div>
+                      <span class="tgk-status-badge" :class="statusClasses(acct.status)" x-text="acct.status || 'open'"></span>
+                    </div>
+                    <div class="tgk-account-card__value" x-text="fmtMoney(accountValue(acct))"></div>
+                  </div>
+                </template>
+              </div>
+            </div>
+
+            <div class="tgk-surface-panel tgk-surface-panel--md">
+              <div class="tgk-panel-heading tgk-panel-heading--spaced">
+                <h3 class="tgk-panel-title">Documents</h3>
+              </div>
+              <template x-if="customerEnvelopeTransactions(selectedContact).length === 0">
+                <div class="tgk-empty-panel tgk-empty-panel--compact">
+                  <div class="tgk-empty-panel__icon">
+                    <svg class="tgk-icon tgk-icon--lg tgk-icon--muted" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                  </div>
+                  <div class="tgk-empty-panel__title">No documents yet</div>
+                  <p class="tgk-empty-panel__copy">Completed and in-flight documents will appear here.</p>
+                </div>
+              </template>
+              <div class="tgk-record-list">
+                <template x-for="env in customerEnvelopeTransactions(selectedContact)" :key="env.id">
+                  <div class="tgk-record-row">
+                    <div class="tgk-record-row__main">
+                      <div class="tgk-record-row__content">
+                        <div class="tgk-record-row__title" x-text="env.name || 'Untitled'"></div>
+                        <div class="tgk-record-row__meta">
+                          <span class="tgk-record-row__id" x-text="env.id || ''"></span>
+                          <template x-if="transactionTimestampLabel(env)">
+                            <span class="u-row u-gap-2">
+                              <span class="tgk-record-row__meta-dot"></span>
+                              <span x-text="transactionTimestampLabel(env)"></span>
+                            </span>
+                          </template>
+                        </div>
+                      </div>
+                      <div class="tgk-record-row__actions">
+                        <template x-if="isEnvelopeTransaction(env)">
+                          <div class="u-row u-gap-2">
+                            <button @click="viewTransactionDoc(env)" class="tgk-icon-button" title="View document">
+                              <svg class="tgk-icon tgk-icon--md" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                            </button>
+                            <button @click="viewTransactionHistory(env)" class="tgk-icon-button" title="View history">
+                              <svg class="tgk-icon tgk-icon--md" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </button>
+                          </div>
+                        </template>
+                      </div>
+                    </div>
+                    <span class="tgk-status-badge" :class="statusClasses(env.status)" x-text="env.status || 'unknown'"></span>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- AGREEMENTS VIEW -->
+    <div x-show="view === 'documents'" class="tgk-page-shell tgk-page-shell--scrollable">
+      <div class="tgk-agreements-dashboard">
+        <div class="tgk-agreements-kpis">
+          <section class="tgk-agreements-kpi-card">
+            <div class="tgk-agreements-kpi-value" x-text="customers.length"></div>
+            <div class="tgk-agreements-kpi-label" x-text="'Active ' + t.clientRolePlural"></div>
+          </section>
+
+          <section class="tgk-agreements-kpi-card">
+            <div class="tgk-agreements-kpi-value" x-text="totalAgreementCount"></div>
+            <div class="tgk-agreements-kpi-label">Total Documents</div>
+            <div class="tgk-agreements-kpi-meta">+12 this month</div>
+          </section>
+
+          <section class="tgk-agreements-kpi-card">
+            <div class="tgk-agreements-kpi-value"><span x-text="agreementCompletionRateValue"></span>%</div>
+            <div class="tgk-agreements-kpi-label">Completion Rate</div>
+          </section>
+
+          <section class="tgk-agreements-kpi-card">
+            <div class="tgk-agreements-kpi-value"><span x-text="agreementTurnaroundHours.toFixed(1)"></span>h</div>
+            <div class="tgk-agreements-kpi-label">Turnaround Time</div>
+          </section>
+        </div>
+
+        <div class="tgk-agreements-content">
+          <section class="tgk-agreements-list-panel tgk-surface-panel tgk-surface-panel--md">
+            <div class="tgk-panel-heading tgk-panel-heading--spaced">
+              <h3 class="tgk-panel-title">Documents</h3>
+            </div>
+
+            <div class="tgk-panel-heading--spaced">
+              <label class="tgk-search-field tgk-search-field--wide">
+                <svg class="tgk-search-field__icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                <input x-model="agreementSearchQuery" type="text" placeholder="Search documents" class="tgk-form-input tgk-form-input--compact tgk-search-field__input">
+              </label>
+            </div>
+
+            <div class="tgk-agreements-list-scroll">
+              <template x-if="agreementsLoading">
+                <div class="tgk-inline-message">Loading documents...</div>
+              </template>
+
+              <template x-if="!agreementsLoading && filteredAgreements.length === 0">
+                <div class="tgk-inline-message">No documents found.</div>
+              </template>
+
+              <div class="tgk-record-list" x-show="!agreementsLoading && filteredAgreements.length > 0">
+                <template x-for="env in filteredAgreements" :key="env.id">
+                  <div class="tgk-record-row">
+                    <div class="tgk-record-row__main">
+                      <div class="tgk-record-row__content">
+                        <div class="tgk-record-row__title" x-text="env.name || 'Untitled'"></div>
+                        <div class="tgk-record-row__meta">
+                          <span x-text="getAgreementInvestorName(env)"></span>
+                          <template x-if="transactionTimestampLabel(env)">
+                            <span class="u-row u-gap-2">
+                              <span class="tgk-record-row__meta-dot"></span>
+                              <span x-text="transactionTimestampLabel(env)"></span>
+                            </span>
+                          </template>
+                          <span class="tgk-record-row__id" x-text="env.id || ''"></span>
+                        </div>
+                      </div>
+
+                      <div class="tgk-record-row__actions">
+                        <template x-if="isEnvelopeTransaction(env)">
+                          <div class="u-row u-gap-2">
+                            <button @click="viewTransactionDoc(env)" class="tgk-icon-button" title="View document">
+                              <svg class="tgk-icon tgk-icon--md" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                            </button>
+                            <button @click="viewTransactionHistory(env)" class="tgk-icon-button" title="View history">
+                              <svg class="tgk-icon tgk-icon--md" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </button>
+                          </div>
+                        </template>
+                      </div>
+                    </div>
+
+                    <span class="tgk-status-badge" :class="statusClasses(env.status)" x-text="env.status || 'unknown'"></span>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </section>
+
+          <div class="tgk-agreements-side-stack">
+            <section class="tgk-agreements-panel tgk-agreements-panel--types">
+              <div class="tgk-agreements-panel-title">Document Types</div>
+              <div class="tgk-agreements-donut-shell">
+                <div class="tgk-agreements-donut" :style="`background:${agreementTypeGradient}`">
+                  <div class="tgk-agreements-donut-center">
+                    <div class="tgk-agreements-donut-total" x-text="totalAgreementCount"></div>
+                    <div class="tgk-agreements-donut-label">Total</div>
+                  </div>
+                </div>
+
+                <div class="tgk-agreements-legend">
+                  <template x-for="item in agreementTypeBreakdown" :key="item.label">
+                    <div class="tgk-agreements-legend-item">
+                      <span class="tgk-agreements-legend-dot" :style="`background:${item.color}`"></span>
+                      <span x-text="item.label"></span>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </section>
+
+            <section class="tgk-agreements-panel tgk-agreements-panel--volume">
+              <div class="tgk-agreements-panel-title">Document Volume — Last 12 Months</div>
+              <div class="tgk-agreements-chart-surface">
+                <div class="tgk-agreements-chart-frame">
+                  <div class="tgk-agreements-bar-chart">
+                    <template x-for="(value, index) in agreementVolumeSeries" :key="index">
+                      <div class="tgk-agreements-bar" :style="agreementBarStyle(value, index)"></div>
+                    </template>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DEALS / PIPELINE VIEW -->
+    <div x-show="view === 'deals'" class="tgk-page-shell">
+      <div class="tgk-page-stack">
+        <div class="tgk-page-header">
+          <h1 class="tgk-page-title" x-text="t.dealPluralLabel"></h1>
+          <div class="tgk-page-header__actions">
+            <section class="tgk-kpi tgk-tone-border--emerald">
+              <div class="tgk-kpi__label">Total Pipeline</div>
+              <div class="tgk-kpi__value" x-text="fmtMoney(totalPipeline)"></div>
+            </section>
+          </div>
+        </div>
+
+        <div class="tgk-surface-panel tgk-surface-panel--md">
+          <div class="tgk-panel-heading tgk-panel-heading--spaced">
+            <h2 class="tgk-panel-title" x-text="t.dealPluralLabel + ' Pipeline'"></h2>
+          </div>
+          <div class="tgk-data-table-shell">
+            <table class="tgk-data-table">
+              <thead>
+                <tr class="tgk-data-table__head-row">
+                  <th class="tgk-data-table__heading" x-text="t.dealLabel"></th>
+                  <th class="tgk-data-table__heading" x-text="t.clientRole"></th>
+                  <th class="tgk-data-table__heading">Value</th>
+                  <th class="tgk-data-table__heading">Stage</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="deal in deals" :key="deal.id">
+                  <tr @click="viewClient(deal.contact)" class="tgk-data-table__row">
+                    <td class="tgk-data-table__cell">
+                      <div class="tgk-data-table__identity">
+                        <div class="tgk-data-table__name" x-text="deal.name"></div>
+                        <div class="tgk-data-table__meta" x-text="deal.label"></div>
+                      </div>
+                    </td>
+                    <td class="tgk-data-table__cell" x-text="deal.contactName"></td>
+                    <td class="tgk-data-table__cell tgk-data-table__cell--numeric" x-text="fmtMoney(deal.value)"></td>
+                    <td class="tgk-data-table__cell">
+                      <span class="tgk-status-badge" :class="statusClasses(deal.status)" x-text="deal.status"></span>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+          <template x-if="deals.length === 0">
+            <div class="tgk-empty-panel tgk-empty-panel--compact">
+              <div class="tgk-empty-panel__title" x-text="'No ' + t.dealPluralLabel.toLowerCase() + ' yet'"></div>
+              <p class="tgk-empty-panel__copy">Deals appear here as records are added to the book.</p>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACTIVITIES VIEW -->
+    <div x-show="view === 'activities'" class="tgk-page-shell">
+      <div class="tgk-page-stack">
+        <div class="tgk-page-header">
+          <h1 class="tgk-page-title" x-text="t.activityPluralLabel"></h1>
+        </div>
+
+        <div class="tgk-surface-panel tgk-surface-panel--md">
+          <div class="tgk-panel-heading tgk-panel-heading--spaced">
+            <h2 class="tgk-panel-title">Open <span x-text="t.activityPluralLabel"></span></h2>
+          </div>
+          <template x-if="activitiesLoading">
+            <div class="tgk-inline-message">Loading activities...</div>
+          </template>
+          <template x-if="!activitiesLoading && activities.length === 0">
+            <div class="tgk-empty-panel tgk-empty-panel--compact">
+              <div class="tgk-empty-panel__title">No activities yet</div>
+              <p class="tgk-empty-panel__copy">Follow-ups and tasks tied to your records will appear here.</p>
+            </div>
+          </template>
+          <div class="tgk-record-list" x-show="!activitiesLoading && activities.length > 0">
+            <template x-for="activity in activities" :key="activity.id">
+              <div class="tgk-record-row">
+                <div class="tgk-record-row__main">
+                  <div class="tgk-record-row__content">
+                    <div class="tgk-record-row__title" x-text="activity.title || 'Untitled activity'"></div>
+                    <div class="tgk-record-row__meta">
+                      <span x-text="activity.description || ''"></span>
+                    </div>
+                  </div>
+                </div>
+                <span class="tgk-status-badge" :class="statusClasses(activity.status)" x-text="activity.status || 'open'"></span>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MONITOR VIEW -->
+    <div x-show="view === 'monitor'" class="tgk-page-shell u-scroll-y" data-partial="../shared/partials/monitor-view.html"></div>
+
+    <!-- WORKSPACES VIEW -->
+    <div x-show="view === 'workspaces'" class="tgk-page-shell u-scroll-y" data-partial="../shared/partials/workspaces-view.html"></div>
+
+    <!-- IAM PRODUCT PLACEHOLDER -->
+    <div x-show="getCurrentIamPlaceholder()" class="tgk-page-shell" data-partial="../shared/partials/iam-placeholder-view.html"></div>
+
+    <!-- SETTINGS VIEW -->
+    <div x-show="canSeeSettings() && view === 'settings'" class="tgk-page-shell">
+      <div x-data="settingsPanelState()">
+        <div x-init="mountSettingsPanel($el)"></div>
+      </div>
+    </div>
+
+    <!-- Onboarding Modal -->
+    <template x-if="showOnboarding">
+      <div class="tgk-modal-shell tgk-modal-shell--workflow">
+        <div class="tgk-modal-backdrop" @click="closeOnboarding()"></div>
+        <div class="tgk-modal-card tgk-modal-card--workflow">
+          <div class="tgk-modal-header">
+            <div class="tgk-inline-actions">
+              <template x-if="maestroInstanceUrl">
+                <a :href="maestroInstanceUrl" target="_blank" rel="noreferrer" class="tgk-button tgk-button--secondary">
+                  Open in New Tab
+                </a>
+              </template>
+              <button @click="closeOnboarding()" class="tgk-modal-close">&times;</button>
+            </div>
+          </div>
+
+          <div class="tgk-modal-body tgk-modal-body--workflow">
+            <template x-if="maestroLoading">
+              <div class="tgk-workflow-shell tgk-workflow-shell--top">
+                <div class="tgk-workflow-state">
+                  <div class="tgk-pill tgk-pill--brand">Docusign IAM</div>
+                  <h3 class="tgk-workflow-title" x-text="'Preparing ' + t.onboardingWorkflowLabel.toLowerCase()"></h3>
+                  <p class="tgk-workflow-copy" x-text="'Starting the embedded onboarding experience for a new ' + t.clientRole.toLowerCase() + '. The form will collect the required details directly in Docusign.'"></p>
+
+                  <div class="tgk-workflow-progress">
+                    <div
+                      class="tgk-workflow-progress__bar"
+                      :style="`width:${((onboardingLoadingIndex + 1) / onboardingLoadingSteps.length) * 100}%`"></div>
+                  </div>
+
+                  <div class="tgk-workflow-step-list">
+                    <template x-for="(step, index) in onboardingLoadingSteps" :key="step">
+                      <div class="tgk-workflow-step" :class="{ 'tgk-workflow-step--active': index <= onboardingLoadingIndex }">
+                        <span class="tgk-workflow-step__index" :class="{ 'tgk-workflow-step__index--active': index <= onboardingLoadingIndex }" x-text="index < onboardingLoadingIndex ? '✓' : index + 1"></span>
+                        <span class="tgk-workflow-step__label" :class="{ 'tgk-workflow-step__label--active': index <= onboardingLoadingIndex }" x-text="step"></span>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </div>
+            </template>
+
+            <template x-if="!maestroLoading && maestroError">
+              <div class="tgk-workflow-shell">
+                <div class="tgk-workflow-state tgk-workflow-state--error">
+                  <h3 class="tgk-workflow-title" x-text="'Unable to launch ' + t.onboardingWorkflowLabel.toLowerCase()"></h3>
+                  <p class="tgk-workflow-copy" x-text="maestroError"></p>
+                  <p class="tgk-workflow-copy">If this is a consent issue, reconnect Docusign so the app can request the <code>aow_manage</code> scope.</p>
+                  <div class="tgk-workflow-actions">
+                    <button @click="loadMaestroWorkflow()" class="tgk-button tgk-button--primary">Try Again</button>
+                    <button @click="closeOnboarding()" class="tgk-button tgk-button--secondary">Close</button>
+                  </div>
+                </div>
+              </div>
+            </template>
+
+            <template x-if="!maestroLoading && !maestroError && maestroInstanceUrl && !maestroCompleted">
+              <iframe
+                class="tgk-modal-frame"
+                :src="maestroInstanceUrl"
+                @load="handleOnboardingFrameLoad()"
+                title="Docusign IAM Account Opening"
+                referrerpolicy="strict-origin-when-cross-origin"
+                allow="clipboard-write; fullscreen">
+              </iframe>
+            </template>
+
+            <template x-if="maestroCompleted && maestroNewContact">
+              <div class="tgk-workflow-shell">
+                <div class="tgk-workflow-state tgk-workflow-state--success">
+                  <div class="tgk-workflow-success-icon">
+                    <svg class="tgk-icon tgk-icon--lg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                  </div>
+                  <h3 class="tgk-workflow-title" x-text="t.onboardingWorkflowLabel + ' completed successfully'"></h3>
+                  <p class="tgk-workflow-copy">
+                    <span x-text="maestroNewContact.name"></span>
+                    has been added to your book. Redirecting now…
+                  </p>
+                  <div class="tgk-workflow-progress tgk-workflow-progress--success">
+                    <div class="tgk-workflow-progress__bar tgk-workflow-progress__bar--success" style="animation: shrink 3s linear forwards;"></div>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+    </template>
+
+  </main>
+
+  <div x-init="mountTransactionModals($el)"></div>
+</div>

@@ -35,10 +35,23 @@
     return null;
   }
 
-  // --- Build config from instance or defaults ---
-  const ic = instanceSlug ? fetchInstanceConfig(instanceSlug) : null;
+  // --- Resolve a default instance for the generic CRM/ERP portals ---
+  // Bare /crm/ and /erp/ (no /i/:slug/ prefix) default to their matching
+  // seeded instance so vocabulary, KPIs, agreements, and data all come from it.
+  // advisor/investor keep the hardcoded tgk-wealth defaults (no fetch).
+  function resolvePortalDefaultSlug() {
+    if (instanceSlug) return null;
+    const p = window.location.pathname;
+    if (/(^|\/)erp(\/|$)/.test(p)) return 'erp';
+    if (/(^|\/)crm(\/|$)/.test(p)) return 'crm';
+    return null;
+  }
 
-  const APP_SLUG = ic ? instanceSlug : 'tgk-wealth';
+  // --- Build config from instance or defaults ---
+  const resolvedSlug = instanceSlug || resolvePortalDefaultSlug();
+  const ic = resolvedSlug ? fetchInstanceConfig(resolvedSlug) : null;
+
+  const APP_SLUG = ic ? resolvedSlug : 'tgk-wealth';
   const APP_NAME = ic?.metadata?.name || 'TGK Wealth';
   const DOCUSIGN_USER_ID = ic?.docusign?.userId || '26016859-d095-4c40-8892-0de438e2a226';
   const DOCUSIGN_ACCOUNT_ID = ic?.docusign?.accountId || '18ecd535-9f12-4c7f-8cf3-caf870d86437';
