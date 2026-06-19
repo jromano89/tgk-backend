@@ -170,6 +170,70 @@
       { id: 'RBT-1180', partner: 'TD Synnex',         type: 'Volume Incentive', targetVol: 500000, actualVol: 412000, accrued: 188000, paid: 120000, status: 'active' },
       { id: 'RBT-1206', partner: 'Ingram Micro',      type: 'Growth Rebate',    targetVol: 300000, actualVol: 318000, accrued: 142500, paid: 142500, status: 'completed' },
       { id: 'RBT-1233', partner: 'Arrow Electronics', type: 'Ship-and-Debit',   targetVol: 250000, actualVol: 168000, accrued: 96000,  paid: 40000,  status: 'active' }
+    ],
+
+    // ---- 5) Procure-to-Pay closed loop (Block 5 / Flow 2) ----
+    // Thresholds are config so the SE can answer "is it configurable?" live.
+    p2pConfig: { priceTolerancePct: 5, priceHardCeilingPct: 15, spendAlertPct: 80, currency: 'USD' },
+
+    // Governing supplier contracts. `navigatorTitle` ties each to a REAL Docusign
+    // Navigator agreement so "from an executed contract" is authentic, not faked.
+    // Each contract is bound to a REAL executed agreement in the connected
+    // Docusign Navigator repository (buyer "Fontara, Inc."). navigatorParty drives
+    // the Navigator party query; navigatorTitle is the exact file-name match.
+    contracts: [
+      {
+        id: 'CT-SVC-0207', name: 'Sentinel Security — Master Services Agreement',
+        supplier: 'Sentinel Security', supplierId: 'V-SENTL-031',
+        navigatorParty: 'Sentinel Security',
+        navigatorTitle: 'Master Services Agreement_20260323_143922.docx',
+        type: 'Master Services Agreement', owner: 'Sam Okoro',
+        paymentTerms: 'Net 30', effectiveDate: '2026-03-23', expiryDate: null,
+        committedValue: 360000, spendToDate: 234000, status: 'active',
+        commodityCodes: ['SVC-SECURITY'],
+        pricing: [
+          { material: 'SVC-MSSP-MON', description: 'Managed Security Monitoring (per month)', uom: 'MO', contractedRate: 18000.00 },
+          { material: 'SVC-PENTEST',  description: 'Penetration Test Engagement',             uom: 'EA', contractedRate: 24000.00 }
+        ],
+        linkedPOs: []
+      },
+      {
+        id: 'CT-SUP-0142', name: 'Meridian Components — Master Supply Agreement',
+        supplier: 'Meridian Components, Inc.', supplierId: 'V-MERID-012',
+        navigatorParty: 'Meridian Components, Inc.',
+        navigatorTitle: 'Fontara-MeridianComponents-MSA-2023-10-01.pdf',
+        type: 'Master Supply Agreement', owner: 'Morgan Diaz',
+        paymentTerms: 'Net 45', effectiveDate: '2023-10-01', expiryDate: '2026-09-30',
+        committedValue: 2400000, spendToDate: 1872000, status: 'active',  // 78% — a requisition tips it past 80%
+        commodityCodes: ['ELEC-CTRL', 'ELEC-MEM', 'ELEC-CONN'],
+        pricing: [
+          { material: 'CTRL-PCIE5-G', description: 'PCIe Gen5 SSD Controller', uom: 'EA', contractedRate: 22.00 },
+          { material: 'DRAM-LP5-8G',  description: 'LPDDR5 DRAM, 8Gb',          uom: 'EA', contractedRate: 6.00 },
+          { material: 'CONN-U2-EDGE', description: 'U.2 Edge Connector',        uom: 'EA', contractedRate: 2.50 }
+        ],
+        linkedPOs: []
+      },
+      {
+        id: 'CT-SUP-0188', name: 'Cascade Industrial — Master Supply Agreement',
+        supplier: 'Cascade Industrial Supply Co.', supplierId: 'V-CASCD-026',
+        navigatorParty: 'Cascade Industrial Supply Co.',
+        navigatorTitle: 'MSA_Fontara_Cascade_Industrial.pdf',
+        type: 'Master Supply Agreement', owner: 'Sam Okoro',
+        paymentTerms: 'Net 30', effectiveDate: '2024-03-01', expiryDate: '2026-02-28',  // expired — renewal overdue
+        committedValue: 1500000, spendToDate: 1200000, status: 'active',
+        commodityCodes: ['IND-CLEANROOM', 'IND-CONSUMABLE'],
+        pricing: [
+          { material: 'CLEAN-IPA-5G',  description: 'Cleanroom IPA, 5 gal',          uom: 'EA', contractedRate: 85.00 },
+          { material: 'GLOVE-ESD-CR',  description: 'ESD Cleanroom Gloves (case)',   uom: 'CS', contractedRate: 120.00 },
+          { material: 'FILT-HEPA-H14', description: 'HEPA H14 Filter Unit',          uom: 'EA', contractedRate: 640.00 }
+        ],
+        linkedPOs: []
+      }
+    ],
+
+    // Off-contract probe for the entitlement block (P2P-03): no governing contract.
+    offContractSuppliers: [
+      { supplier: 'Ceradyne Substrates', supplierId: 'V-CERAD-097', commodity: 'RAW-CERAMIC' }
     ]
   });
 })();

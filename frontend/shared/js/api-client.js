@@ -148,6 +148,62 @@
   }
 
   // Normalize a Navigator agreement across the API's field-name variants.
+  // --- Docusign API activity log (demo "integration inspector" drawer) ---
+  // Records each Docusign call so the UI can show, live, that data is arriving
+  // from another system. NEVER logs auth headers/tokens — only method/url/body.
+  const TGK_DS_LOG_LIMIT = 50;
+  function tgkDsLogPush(entry) {
+    const log = (window.__TGK_DS_LOG = window.__TGK_DS_LOG || []);
+    log.unshift(entry);
+    if (log.length > TGK_DS_LOG_LIMIT) log.length = TGK_DS_LOG_LIMIT;
+    tgkDsLogDispatch(entry);
+  }
+  function tgkDsLogDispatch(entry) {
+    try { window.dispatchEvent(new CustomEvent('tgk:ds-api', { detail: entry })); } catch (e) { /* no-op */ }
+  }
+  function tgkSummarizeBody(body) {
+    if (body == null) return null;
+    try { return typeof body === 'string' ? JSON.parse(body) : body; }
+    catch (e) { return String(body).slice(0, 2000); }
+  }
+  function tgkSummarizeResponse(resp) {
+    if (resp == null) return null;
+    let meta = { kind: 'object' };
+    if (Array.isArray(resp)) meta = { kind: 'array', count: resp.length };
+    else if (typeof resp === 'object') {
+      const arr = resp.data || resp.agreements || resp.value || resp.envelopes || resp.items;
+      if (Array.isArray(arr)) meta = { kind: 'collection', count: arr.length };
+    }
+    let json = '';
+    try { json = JSON.stringify(resp, null, 2); } catch (e) { json = String(resp); }
+    const truncated = json.length > 12000;
+    return { ...meta, json: truncated ? json.slice(0, 12000) + '\n… (truncated)' : json };
+  }
+  function tgkParseUrl(url) {
+    try { const u = new URL(url); return { host: u.host, path: u.pathname, query: u.search }; }
+    catch (e) { return { host: '', path: String(url || ''), query: '' }; }
+  }
+  function tgkDsEntry(options) {
+    const u = tgkParseUrl(options?.url);
+    return {
+      id: 'ds-' + Date.now().toString(36) + Math.floor(Math.random() * 1e6).toString(36),
+      ts: new Date().toISOString(),
+      method: String(options?.method || 'GET').toUpperCase(),
+      url: String(options?.url || ''), host: u.host, path: u.path, query: u.query,
+      requestBody: tgkSummarizeBody(options?.body),
+      status: null, ok: null, durationMs: null, response: null, error: null, pending: true,
+      _t0: (typeof performance !== 'undefined' ? performance.now() : Date.now())
+    };
+  }
+  function tgkDsEnd(entry, patch) {
+    if (!entry) return;
+    const now = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+    entry.durationMs = Math.round(now - (entry._t0 || now));
+    entry.pending = false;
+    Object.assign(entry, patch);
+    tgkDsLogDispatch(entry);
+  }
+
   function mapNavigatorAgreement(agreement) {
     const a = agreement && typeof agreement === 'object' ? agreement : {};
     const provisions = a.provisions || {};
@@ -784,17 +840,31 @@
     },
 
     async proxyDocusign(options) {
-      return this.proxy({
-        ...options,
-        accessToken: await this.getDocusignAccessToken()
-      });
+      const accessToken = await this.getDocusignAccessToken();
+      const entry = tgkDsEntry(options);
+      tgkDsLogPush(entry);
+      try {
+        const result = await this.proxy({ ...options, accessToken });
+        tgkDsEnd(entry, { ok: true, status: 200, response: tgkSummarizeResponse(result) });
+        return result;
+      } catch (e) {
+        tgkDsEnd(entry, { ok: false, status: e?.status || 'ERR', error: String(e?.message || e) });
+        throw e;
+      }
     },
 
     async proxyDocusignResponse(options) {
-      return this.proxyResponse({
-        ...options,
-        accessToken: await this.getDocusignAccessToken()
-      });
+      const accessToken = await this.getDocusignAccessToken();
+      const entry = tgkDsEntry(options);
+      tgkDsLogPush(entry);
+      try {
+        const resp = await this.proxyResponse({ ...options, accessToken });
+        tgkDsEnd(entry, { ok: resp?.ok ?? true, status: resp?.status ?? 200, response: { kind: 'stream', json: '(binary / document stream)' } });
+        return resp;
+      } catch (e) {
+        tgkDsEnd(entry, { ok: false, status: e?.status || 'ERR', error: String(e?.message || e) });
+        throw e;
+      }
     },
 
     // --- Docusign Navigator (Agreement Manager) — real agreements repository ---
@@ -859,18 +929,52 @@
 
     // Create an EMBEDDABLE instance. clientUserId is what makes the form embeddable
     // (vs. a hosted, anonymous form). Returns {formUrl, instanceToken, ...} for the JS SDK.
-    async createWebFormInstance(formId, clientUserId) {
+    // Optional formValues prefills fields — keys are the fields' API reference names.
+    async createWebFormInstance(formId, clientUserId, formValues) {
       const id = String(formId || '').trim();
       if (!id) {
         throw new Error('Missing web form id.');
       }
       const resolvedClientUserId = String(clientUserId || '').trim() || `tgk-${this.appSlug || 'demo'}-${id}`;
+      const body = { clientUserId: resolvedClientUserId };
+      if (formValues && typeof formValues === 'object' && Object.keys(formValues).length) {
+        body.formValues = formValues;
+      }
       return this.proxyDocusign({
         method: 'POST',
         url: this.webFormsUrl(`/api/webforms/v1.1/accounts/{accountId}/forms/${encodeURIComponent(id)}/instances`),
         headers: { Accept: 'application/json' },
-        body: { clientUserId: resolvedClientUserId }
+        body
       });
+    },
+
+    // Fetch a form's input fields (for prefill mapping). Returns
+    // [{ componentName, label, type, options }]. componentName is the formValues key.
+    async getWebFormFields(formId) {
+      const id = String(formId || '').trim();
+      if (!id) {
+        throw new Error('Missing web form id.');
+      }
+      const result = await this.proxyDocusign({
+        method: 'GET',
+        url: this.webFormsUrl(`/api/webforms/v1.1/accounts/{accountId}/forms/${encodeURIComponent(id)}?state=active`),
+        headers: { Accept: 'application/json' }
+      });
+      const comps = (result && result.formContent && result.formContent.components) || {};
+      const INPUT = new Set(['TextBox', 'Select', 'Currency', 'Number', 'DatePicker', 'Checkbox', 'RadioGroup', 'Email']);
+      const fields = [];
+      for (const key in comps) {
+        const c = comps[key];
+        if (c && INPUT.has(c.componentType) && c.componentName) {
+          fields.push({
+            componentName: c.componentName,
+            label: String(c.label || ''),
+            type: c.componentType,
+            options: Array.isArray(c.options) ? c.options.map((o) => ({ label: o.label, value: o.value })) : null
+          });
+        }
+      }
+      return fields;
     },
 
     triggerMaestroWorkflow(workflowId, body) {

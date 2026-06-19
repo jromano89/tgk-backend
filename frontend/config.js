@@ -53,13 +53,16 @@
 
   const APP_SLUG = ic ? resolvedSlug : 'tgk-wealth';
   const APP_NAME = ic?.metadata?.name || 'TGK Wealth';
-  const DOCUSIGN_USER_ID = ic?.docusign?.userId || '26016859-d095-4c40-8892-0de438e2a226';
-  const DOCUSIGN_ACCOUNT_ID = ic?.docusign?.accountId || '18ecd535-9f12-4c7f-8cf3-caf870d86437';
+  const DOCUSIGN_USER_ID = ic?.docusign?.userId || 'd4020d17-b433-44a7-83b6-01813206bee4';
+  const DOCUSIGN_ACCOUNT_ID = ic?.docusign?.accountId || '130fa778-ea24-4594-9293-8a363b6ccd72';
   const DOCUSIGN_SCOPES = ic?.docusign?.scopes || 'signature impersonation aow_manage organization_read webforms_manage webforms_read webforms_instance_read webforms_instance_write adm_store_unified_repo_read dtr.rooms.write dtr.rooms.read';
   const DOCUSIGN_IAM_BASE_URL = ic?.docusign?.baseUrl || 'https://api-d.docusign.com';
   const DOCUSIGN_ESIGN_BASE_URL = ic?.docusign?.esignBaseUrl || 'https://demo.docusign.net/restapi';
   const DOCUSIGN_WEBFORMS_BASE_URL = ic?.docusign?.webFormsBaseUrl || 'https://apps-d.docusign.com';
   const DOCUSIGN_WEBFORMS_JS_URL = ic?.docusign?.webFormsJsUrl || 'https://js-d.docusign.com/bundle.js';
+  // Agreement Manager (formerly Navigator) web app — used to deep-link into a real agreement.
+  // Deep link: {base}/send/agreement-manager/agreements/{agreementId}
+  const DOCUSIGN_AGREEMENT_MANAGER_URL = ic?.docusign?.agreementManagerUrl || 'https://apps-d.docusign.com';
   // Public OAuth integration key (client id) — required by the Web Forms JS SDK.
   const DOCUSIGN_CLIENT_ID = ic?.docusign?.clientId || ic?.docusign?.integrationKey || 'b8b7c929-b870-4343-a48a-448283cd7379';
   const ADVISOR_ID = ic?.advisorId || '4871abfa-8868-4501-b068-5936c6363e6b';
@@ -130,6 +133,7 @@
     docusignEsignBaseUrl: DOCUSIGN_ESIGN_BASE_URL,
     docusignWebFormsBaseUrl: DOCUSIGN_WEBFORMS_BASE_URL,
     docusignWebFormsJsUrl: DOCUSIGN_WEBFORMS_JS_URL,
+    docusignAgreementManagerUrl: DOCUSIGN_AGREEMENT_MANAGER_URL,
     docusignClientId: DOCUSIGN_CLIENT_ID,
     docusignAuth: {
       userId: DOCUSIGN_USER_ID,

@@ -1,4 +1,7 @@
-<div class="tgk-portal-shell" x-data="erpApp()">
+<div class="tgk-portal-shell tgk-portal-shell--with-footer" x-data="erpApp()">
+
+  <!-- Sidebar + main content row (sits above the full-width footer) -->
+  <div class="tgk-portal-shell__body">
 
   <!-- Sidebar -->
   <aside class="tgk-portal-sidebar" :class="{ 'tgk-portal-sidebar--collapsed': sidebarCollapsed }">
@@ -39,6 +42,15 @@
         :class="{ 'tgk-portal-nav__item--active': view === 'invoices', 'tgk-portal-nav__item--collapsed': sidebarCollapsed }">
         <svg class="tgk-portal-nav__icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
         <span x-show="!sidebarCollapsed" class="tgk-portal-nav__label">Invoices &amp; Approvals</span>
+      </button>
+
+      <div x-show="!sidebarCollapsed" class="tgk-portal-nav__section">Procurement</div>
+
+      <button @click="setView('contracts')"
+        class="tgk-portal-nav__item"
+        :class="{ 'tgk-portal-nav__item--active': view === 'contracts' || view === 'contractDetail', 'tgk-portal-nav__item--collapsed': sidebarCollapsed }">
+        <svg class="tgk-portal-nav__icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6M9 8h6"/><path d="M5 3h9l5 5v13a0 0 0 01 0 0H5a0 0 0 01 0 0V3z"/><path d="M14 3v5h5"/></svg>
+        <span x-show="!sidebarCollapsed" class="tgk-portal-nav__label">Contracts</span>
       </button>
 
       <div x-show="!sidebarCollapsed" class="tgk-portal-nav__section">Revenue</div>
@@ -189,6 +201,7 @@
               <svg class="tgk-search-field__icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
               <input x-model="searchQuery" type="text" :placeholder="'Search ' + t.clientRolePlural.toLowerCase()" class="tgk-form-input tgk-search-field__input">
             </label>
+            <button @click="openSupplierIntake({})" class="tgk-button tgk-button--secondary">New Supplier Intake</button>
             <button @click="openErpSend('vendorAgreement')" class="tgk-button tgk-button--primary">New Vendor Agreement</button>
           </div>
         </div>
@@ -262,6 +275,8 @@
                   <span x-text="selectedVendor.email"></span>
                 </div>
               </div>
+              <button @click="openSupplierIntake({ supplier: selectedVendor.name, email: selectedVendor.email })"
+                class="tgk-button tgk-button--primary tgk-profile-card__action">Start Supplier Intake</button>
             </div>
             <section class="tgk-kpi tgk-tone-border--sky">
               <div class="tgk-kpi__label">Order Value</div>
@@ -345,10 +360,10 @@
             <div class="tgk-surface-panel tgk-surface-panel--md">
               <div class="tgk-panel-heading tgk-panel-heading--spaced">
                 <h3 class="tgk-panel-title">Agreements</h3>
-                <span class="tgk-pill tgk-pill--brand">Docusign Navigator</span>
+                <span class="tgk-pill tgk-pill--brand">Docusign Agreement Manager</span>
               </div>
               <template x-if="navLoading">
-                <div class="tgk-inline-message">Searching Navigator for agreements…</div>
+                <div class="tgk-inline-message">Searching Agreement Manager for agreements…</div>
               </template>
               <template x-if="!navLoading && navError">
                 <div class="tgk-inline-message" x-text="navError"></div>
@@ -356,7 +371,7 @@
               <template x-if="!navLoading && !navError && navAgreements.length === 0">
                 <div class="tgk-empty-panel tgk-empty-panel--compact">
                   <div class="tgk-empty-panel__title">No agreements found</div>
-                  <p class="tgk-empty-panel__copy">No Navigator agreements matched this vendor's name.</p>
+                  <p class="tgk-empty-panel__copy">No Agreement Manager records matched this vendor's name.</p>
                 </div>
               </template>
               <div class="tgk-record-list" x-show="!navLoading && navAgreements.length > 0">
@@ -762,6 +777,274 @@
       </div>
     </div>
 
+    <!-- CONTRACTS VIEW (P2P) -->
+    <div x-show="view === 'contracts'" class="tgk-page-shell tgk-page-shell--scrollable">
+      <div class="tgk-page-stack">
+        <div class="tgk-page-header">
+          <h1 class="tgk-page-title">Contracts</h1>
+          <div class="tgk-page-header__actions">
+            <span class="tgk-pill tgk-pill--brand">Docusign Agreement Manager</span>
+            <button @click="syncContractsFromDocusign()" :disabled="syncing" class="tgk-button tgk-button--primary"
+              x-text="syncing ? 'Syncing…' : 'Sync from Agreement Manager'"></button>
+          </div>
+        </div>
+
+        <template x-if="syncMessage">
+          <div class="tgk-inline-message" x-text="syncMessage"></div>
+        </template>
+        <template x-if="syncError">
+          <div class="tgk-inline-message" x-text="'Sync failed: ' + syncError"></div>
+        </template>
+
+        <div class="tgk-surface-panel tgk-surface-panel--md">
+          <div class="tgk-panel-heading tgk-panel-heading--spaced">
+            <h2 class="tgk-panel-title">Governing Supplier Contracts</h2>
+          </div>
+          <div class="tgk-data-table-shell">
+            <table class="tgk-data-table">
+              <thead>
+                <tr class="tgk-data-table__head-row">
+                  <th class="tgk-data-table__heading">Contract</th>
+                  <th class="tgk-data-table__heading">Supplier</th>
+                  <th class="tgk-data-table__heading">Type</th>
+                  <th class="tgk-data-table__heading">Committed</th>
+                  <th class="tgk-data-table__heading">Spend</th>
+                  <th class="tgk-data-table__heading">Renews</th>
+                  <th class="tgk-data-table__heading">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="c in contracts" :key="c.id">
+                  <tr @click="viewContract(c)" class="tgk-data-table__row">
+                    <td class="tgk-data-table__cell">
+                      <div class="tgk-data-table__identity">
+                        <div class="tgk-data-table__name" x-text="c.id"></div>
+                        <div class="tgk-data-table__meta" x-text="c.owner"></div>
+                      </div>
+                    </td>
+                    <td class="tgk-data-table__cell" x-text="c.supplier"></td>
+                    <td class="tgk-data-table__cell" x-text="c.type"></td>
+                    <td class="tgk-data-table__cell tgk-data-table__cell--numeric" x-text="fmtMoney(c.committedValue)"></td>
+                    <td class="tgk-data-table__cell">
+                      <div class="tgk-waterfall__track" style="min-width:120px">
+                        <div class="tgk-waterfall__bar"
+                          :class="contractSpendTone(c) === 'over' ? 'tgk-waterfall__bar--deduction' : 'tgk-waterfall__bar--base'"
+                          :style="`width:${Math.min(100, contractSpendPct(c) * 100)}%`"></div>
+                      </div>
+                      <div class="tgk-data-table__meta" x-text="fmtRatioPct(contractSpendPct(c))"></div>
+                    </td>
+                    <td class="tgk-data-table__cell tgk-data-table__cell--numeric">
+                      <span :class="contractRenewalDue(c) ? 'tgk-waterfall__amount--neg' : ''"
+                        x-text="contractRenewsLabel(c)"></span>
+                    </td>
+                    <td class="tgk-data-table__cell">
+                      <span class="tgk-status-badge" :class="statusClasses(c.status)" x-text="c.status"></span>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTRACT DETAIL (P2P object page) -->
+    <template x-if="view === 'contractDetail' && selectedContract">
+      <div class="tgk-page-shell tgk-page-shell--scrollable">
+        <button @click="backToContracts()" class="tgk-back-link">
+          <svg class="tgk-icon tgk-icon--sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg>
+          Back to Contracts
+        </button>
+
+        <div class="tgk-page-stack">
+          <div class="tgk-page-header">
+            <h1 class="tgk-page-title" x-text="selectedContract.name || selectedContract.navigatorTitle"></h1>
+            <div class="tgk-page-header__actions">
+              <template x-if="contractAgreement && contractAgreement.id">
+                <button @click="openContractAgreementDoc()" class="tgk-button tgk-button--secondary">Open in Agreement Manager</button>
+              </template>
+              <button @click="openRequisition(selectedContract)" class="tgk-button tgk-button--primary">Create Requisition</button>
+            </div>
+          </div>
+
+          <div class="u-row u-gap-2">
+            <span class="tgk-status-badge" :class="statusClasses(selectedContract.status)" x-text="selectedContract.status"></span>
+            <template x-if="contractAgreementLoading">
+              <span class="tgk-pill tgk-pill--brand">Matching Agreement Manager…</span>
+            </template>
+            <template x-if="!contractAgreementLoading && contractAgreement">
+              <span class="tgk-pill tgk-pill--brand">Executed · Docusign Agreement Manager</span>
+            </template>
+            <template x-if="!contractAgreementLoading && !contractAgreement">
+              <span class="tgk-pill">Agreement Manager match pending</span>
+            </template>
+          </div>
+
+          <!-- Structured source agreement from Agreement Manager (the real executed CLM record) -->
+          <template x-if="contractAgreement">
+            <div class="tgk-surface-panel tgk-surface-panel--md">
+              <div class="tgk-panel-heading tgk-panel-heading--spaced">
+                <h3 class="tgk-panel-title">Source Agreement</h3>
+                <span class="tgk-pill tgk-pill--brand">Docusign Agreement Manager</span>
+              </div>
+              <div class="tgk-record-row">
+                <div class="tgk-record-row__main">
+                  <div class="tgk-record-row__content">
+                    <div class="tgk-record-row__title" x-text="contractAgreement.title"></div>
+                    <div class="tgk-record-row__meta">
+                      <span x-text="contractAgreement.type || 'Agreement'"></span>
+                      <template x-if="contractAgreement.parties && contractAgreement.parties.length">
+                        <span class="u-row u-gap-2"><span class="tgk-record-row__meta-dot"></span><span x-text="contractAgreement.parties.join(' · ')"></span></span>
+                      </template>
+                      <template x-if="contractAgreement.effectiveDate">
+                        <span class="u-row u-gap-2"><span class="tgk-record-row__meta-dot"></span><span x-text="'Effective ' + (contractAgreement.effectiveDate || '').slice(0,10)"></span></span>
+                      </template>
+                      <template x-if="contractAgreement.expirationDate">
+                        <span class="u-row u-gap-2"><span class="tgk-record-row__meta-dot"></span><span x-text="'Expires ' + (contractAgreement.expirationDate || '').slice(0,10)"></span></span>
+                      </template>
+                    </div>
+                  </div>
+                  <div class="tgk-record-row__actions">
+                    <template x-if="contractAgreement.id">
+                      <button @click="openContractAgreementDoc()" class="tgk-icon-button" title="Open in Agreement Manager">
+                        <svg class="tgk-icon tgk-icon--md" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg>
+                      </button>
+                    </template>
+                  </div>
+                </div>
+                <template x-if="contractAgreement.status">
+                  <span class="tgk-status-badge" :class="statusClasses(contractAgreement.status)" x-text="contractAgreement.status"></span>
+                </template>
+              </div>
+            </div>
+          </template>
+
+          <!-- Facets -->
+          <div class="tgk-kpi-grid">
+            <section class="tgk-kpi tgk-tone-border--sky">
+              <div class="tgk-kpi__label">Supplier</div>
+              <div class="tgk-kpi__value" x-text="selectedContract.supplier"></div>
+              <div class="tgk-kpi__detail" x-text="selectedContract.supplierId"></div>
+            </section>
+            <section class="tgk-kpi tgk-tone-border--emerald">
+              <div class="tgk-kpi__label">Owner</div>
+              <div class="tgk-kpi__value" x-text="selectedContract.owner"></div>
+              <div class="tgk-kpi__detail" x-text="selectedContract.paymentTerms"></div>
+            </section>
+            <section class="tgk-kpi tgk-tone-border--amber">
+              <div class="tgk-kpi__label">Committed Value</div>
+              <div class="tgk-kpi__value" x-text="fmtMoney(selectedContract.committedValue)"></div>
+              <div class="tgk-kpi__detail" x-text="'Remaining ' + fmtMoney(contractSpendRemaining(selectedContract))"></div>
+            </section>
+            <section class="tgk-kpi" :class="contractRenewalDue(selectedContract) ? 'tgk-tone-border--red' : 'tgk-tone-border--sky'">
+              <div class="tgk-kpi__label">Renews</div>
+              <div class="tgk-kpi__value" x-text="contractRenewsLabel(selectedContract)"></div>
+              <div class="tgk-kpi__detail" x-text="selectedContract.expiryDate ? ('Expires ' + selectedContract.expiryDate) : 'Auto-renew / no fixed term'"></div>
+            </section>
+          </div>
+
+          <!-- Spend visibility -->
+          <div class="tgk-surface-panel tgk-surface-panel--md">
+            <div class="tgk-panel-heading tgk-panel-heading--spaced">
+              <h2 class="tgk-panel-title">Spend Against Commitment</h2>
+              <span class="tgk-status-badge"
+                :class="contractSpendTone(selectedContract) === 'over' ? 'tgk-status-badge--warning' : 'tgk-status-badge--success'"
+                x-text="fmtRatioPct(contractSpendPct(selectedContract)) + ' consumed'"></span>
+            </div>
+            <div class="tgk-waterfall">
+              <div class="tgk-waterfall__row">
+                <div class="tgk-waterfall__label" x-text="fmtMoney(contractSpend(selectedContract)) + ' of ' + fmtMoney(selectedContract.committedValue)"></div>
+                <div class="tgk-waterfall__track">
+                  <div class="tgk-waterfall__bar"
+                    :class="contractSpendTone(selectedContract) === 'over' ? 'tgk-waterfall__bar--deduction' : 'tgk-waterfall__bar--base'"
+                    :style="`width:${Math.min(100, contractSpendPct(selectedContract) * 100)}%`"></div>
+                </div>
+                <div class="tgk-waterfall__amount" x-text="fmtRatioPct(contractSpendPct(selectedContract))"></div>
+                <div class="tgk-waterfall__running" x-text="'Alert at ' + p2pConfig.spendAlertPct + '%'"></div>
+              </div>
+            </div>
+            <template x-if="contractSpendPct(selectedContract) * 100 >= p2pConfig.spendAlertPct">
+              <div class="tgk-inline-message">Spend has crossed the alert threshold — routed to contract owner in Monitor.</div>
+            </template>
+          </div>
+
+          <!-- Contracted pricing -->
+          <div class="tgk-surface-panel tgk-surface-panel--md">
+            <div class="tgk-panel-heading tgk-panel-heading--spaced">
+              <h3 class="tgk-panel-title">Contracted Pricing</h3>
+              <span class="tgk-data-table__meta" x-text="selectedContract.commodityCodes.join(' · ')"></span>
+            </div>
+            <div class="tgk-data-table-shell">
+              <table class="tgk-data-table">
+                <thead>
+                  <tr class="tgk-data-table__head-row">
+                    <th class="tgk-data-table__heading">Material</th>
+                    <th class="tgk-data-table__heading">Description</th>
+                    <th class="tgk-data-table__heading">UoM</th>
+                    <th class="tgk-data-table__heading">Contracted Rate</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-for="p in selectedContract.pricing" :key="p.material">
+                    <tr class="tgk-data-table__row">
+                      <td class="tgk-data-table__cell" x-text="p.material"></td>
+                      <td class="tgk-data-table__cell" x-text="p.description"></td>
+                      <td class="tgk-data-table__cell" x-text="p.uom"></td>
+                      <td class="tgk-data-table__cell tgk-data-table__cell--numeric" x-text="fmtMoney(p.contractedRate)"></td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Linked POs -->
+          <div class="tgk-surface-panel tgk-surface-panel--md">
+            <div class="tgk-panel-heading tgk-panel-heading--spaced">
+              <h3 class="tgk-panel-title">Linked Purchase Orders</h3>
+            </div>
+            <div class="tgk-record-list">
+              <template x-for="po in contractLinkedPOs(selectedContract)" :key="po.name">
+                <div class="tgk-record-row" :style="po.runtime ? '' : 'cursor:pointer'" @click="!po.runtime && openLinkedPo(po.name)">
+                  <div class="tgk-record-row__main">
+                    <div class="tgk-record-row__content">
+                      <div class="tgk-record-row__title" x-text="po.name"></div>
+                      <div class="tgk-record-row__meta">
+                        <span x-text="po.runtime ? 'Created this session · linked to ' + selectedContract.id : 'Linked to ' + selectedContract.id"></span>
+                      </div>
+                    </div>
+                  </div>
+                  <span class="tgk-status-badge" :class="po.runtime ? 'tgk-status-badge--info' : 'tgk-status-badge--neutral'" x-text="po.runtime ? 'new' : 'linked'"></span>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- Obligations -->
+          <div class="tgk-surface-panel tgk-surface-panel--md">
+            <div class="tgk-panel-heading tgk-panel-heading--spaced">
+              <h3 class="tgk-panel-title">Obligations</h3>
+            </div>
+            <div class="tgk-record-list">
+              <div class="tgk-record-row">
+                <div class="tgk-record-row__main">
+                  <div class="tgk-record-row__content">
+                    <div class="tgk-record-row__title" x-text="selectedContract.expiryDate ? ('Renewal — expires ' + selectedContract.expiryDate) : 'Auto-renew — no fixed expiry'"></div>
+                    <div class="tgk-record-row__meta">
+                      <span x-text="'Routed to ' + selectedContract.owner"></span>
+                    </div>
+                  </div>
+                </div>
+                <span class="tgk-status-badge" :class="contractRenewalDue(selectedContract) ? 'tgk-status-badge--warning' : 'tgk-status-badge--neutral'"
+                  x-text="contractRenewsLabel(selectedContract)"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+
     <!-- MONITOR VIEW -->
     <div x-show="view === 'monitor'" class="tgk-page-shell u-scroll-y" data-partial="../shared/partials/monitor-view.html"></div>
 
@@ -852,7 +1135,246 @@
       </div>
     </template>
 
+    <!-- Requisition Modal (P2P) -->
+    <template x-if="req.open">
+      <div class="tgk-modal-shell">
+        <div class="tgk-modal-backdrop" @click="closeRequisition()"></div>
+        <div class="tgk-modal-card">
+          <div class="tgk-modal-header tgk-panel-heading--spaced">
+            <div>
+              <h3 class="tgk-panel-title">Create Requisition</h3>
+              <div class="tgk-data-table__meta" x-text="reqContract ? (reqContract.id + ' · ' + reqContract.supplier) : ''"></div>
+            </div>
+            <button @click="closeRequisition()" class="tgk-modal-close" aria-label="Close"><svg class="tgk-icon tgk-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+          </div>
+
+          <div class="tgk-modal-body">
+            <!-- Success state -->
+            <template x-if="req.submitted">
+              <div class="tgk-page-stack">
+                <div class="tgk-empty-panel">
+                  <div class="tgk-empty-panel__title" x-text="'Requisition submitted — ' + req.poNumber"></div>
+                  <p class="tgk-empty-panel__copy" x-text="'Linked to ' + (reqContract ? reqContract.id : '') + '. Spend updated against the contract commitment.'"></p>
+                </div>
+                <div class="tgk-workflow-actions">
+                  <button @click="closeRequisition()" class="tgk-button tgk-button--primary">Done</button>
+                </div>
+              </div>
+            </template>
+
+            <!-- Editor -->
+            <template x-if="!req.submitted">
+              <div class="tgk-page-stack">
+                <!-- Pre-populated from the executed contract (P2P-02) -->
+                <div class="tgk-kpi-grid">
+                  <section class="tgk-kpi tgk-tone-border--sky">
+                    <div class="tgk-kpi__label">Supplier</div>
+                    <div class="tgk-kpi__value" x-text="reqContract ? reqContract.supplier : ''"></div>
+                    <div class="tgk-kpi__detail" x-text="reqContract ? reqContract.supplierId : ''"></div>
+                  </section>
+                  <section class="tgk-kpi tgk-tone-border--emerald">
+                    <div class="tgk-kpi__label">Payment Terms</div>
+                    <div class="tgk-kpi__value" x-text="reqContract ? reqContract.paymentTerms : ''"></div>
+                    <div class="tgk-kpi__detail">Pre-filled from contract</div>
+                  </section>
+                  <section class="tgk-kpi tgk-tone-border--amber">
+                    <div class="tgk-kpi__label">Requisition Total</div>
+                    <div class="tgk-kpi__value" x-text="fmtMoney(reqTotal)"></div>
+                    <div class="tgk-kpi__detail" x-text="'Remaining ' + (reqContract ? fmtMoney(contractSpendRemaining(reqContract)) : '')"></div>
+                  </section>
+                </div>
+
+                <!-- Line editor with live entitlement + price checks -->
+                <div class="tgk-surface-panel tgk-surface-panel--md">
+                  <div class="tgk-panel-heading tgk-panel-heading--spaced">
+                    <h4 class="tgk-panel-title">Line Items</h4>
+                    <button @click="addReqLine()" class="tgk-button tgk-button--secondary">Add Line</button>
+                  </div>
+                  <div class="tgk-data-table-shell">
+                    <table class="tgk-data-table">
+                      <thead>
+                        <tr class="tgk-data-table__head-row">
+                          <th class="tgk-data-table__heading">Material</th>
+                          <th class="tgk-data-table__heading">Contracted</th>
+                          <th class="tgk-data-table__heading">Qty</th>
+                          <th class="tgk-data-table__heading">Unit Price</th>
+                          <th class="tgk-data-table__heading">Amount</th>
+                          <th class="tgk-data-table__heading">Check</th>
+                          <th class="tgk-data-table__heading"></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <template x-for="(line, idx) in req.lines" :key="idx">
+                          <tr class="tgk-data-table__row">
+                            <td class="tgk-data-table__cell">
+                              <select x-model="line.material" class="tgk-form-input tgk-form-input--compact">
+                                <template x-for="opt in reqMaterialOptions(reqContract)" :key="opt.material">
+                                  <option :value="opt.material" x-text="opt.material + (opt.offContract ? ' (off-contract)' : '')"></option>
+                                </template>
+                              </select>
+                            </td>
+                            <td class="tgk-data-table__cell tgk-data-table__cell--numeric"
+                              x-text="reqLineContractRate(line) !== null ? fmtMoney(reqLineContractRate(line)) : '—'"></td>
+                            <td class="tgk-data-table__cell tgk-data-table__cell--numeric">
+                              <input type="number" min="0" x-model.number="line.qty" class="tgk-form-input tgk-form-input--compact" style="max-width:90px">
+                            </td>
+                            <td class="tgk-data-table__cell tgk-data-table__cell--numeric">
+                              <input type="number" min="0" step="0.01" x-model.number="line.unitPrice" class="tgk-form-input tgk-form-input--compact" style="max-width:110px">
+                            </td>
+                            <td class="tgk-data-table__cell tgk-data-table__cell--numeric" x-text="fmtMoney(reqLineAmount(line))"></td>
+                            <td class="tgk-data-table__cell">
+                              <span class="tgk-status-badge"
+                                :class="{ 'tgk-status-badge--success': reqLineState(line).status === 'ok', 'tgk-status-badge--warning': reqLineState(line).status === 'flag', 'tgk-status-badge--danger': reqLineState(line).status === 'block' }"
+                                x-text="reqLineState(line).reason"></span>
+                            </td>
+                            <td class="tgk-data-table__cell">
+                              <button @click="removeReqLine(idx)" class="tgk-icon-button" title="Remove line"><svg class="tgk-icon tgk-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+                            </td>
+                          </tr>
+                        </template>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <!-- Gate banners -->
+                <template x-if="!reqEntitled">
+                  <div class="tgk-inline-message">Entitlement check failed — a line has no governing contract for its commodity. Resolve before submitting.</div>
+                </template>
+                <template x-if="reqEntitled && reqHasFlags">
+                  <div class="tgk-inline-message" x-text="'Price variance above the ' + p2pConfig.priceTolerancePct + '% tolerance — flagged for approval.'"></div>
+                </template>
+
+                <div class="tgk-workflow-actions">
+                  <button @click="submitRequisition()" class="tgk-button tgk-button--primary" :disabled="reqBlocked" x-text="reqBlocked ? 'Blocked' : 'Submit Requisition'"></button>
+                  <button @click="closeRequisition()" class="tgk-button tgk-button--secondary">Cancel</button>
+                </div>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- Supplier Intake Modal — direct-launch, prefilled Docusign Web Form (Block 2 Scenario C) -->
+    <template x-if="showIntake">
+      <div class="tgk-modal-shell tgk-modal-shell--workflow">
+        <div class="tgk-modal-backdrop" @click="closeSupplierIntake()"></div>
+        <div class="tgk-modal-card tgk-modal-card--workflow tgk-modal-card--intake" x-init="$nextTick(() => embedSupplierIntake())">
+          <div class="tgk-modal-header tgk-panel-heading--spaced">
+            <div>
+              <span class="tgk-pill tgk-pill--brand">Docusign Web Forms</span>
+              <h3 class="tgk-workflow-title">Supplier Intake</h3>
+              <template x-if="intakePrefill && intakePrefill.supplier">
+                <p class="tgk-page-copy" x-text="'Prefilled for ' + intakePrefill.supplier + ' — submitting routes this into Docusign.'"></p>
+              </template>
+            </div>
+            <button @click="closeSupplierIntake()" class="tgk-modal-close" aria-label="Close"><svg class="tgk-icon tgk-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+          </div>
+
+          <div class="tgk-modal-body tgk-modal-body--workflow">
+            <div class="tgk-webforms-embed">
+              <div class="tgk-webforms-embed__status" x-show="intakeEmbedding" x-cloak>Preparing the Supplier Intake form…</div>
+
+              <template x-if="intakeMissing">
+                <div class="tgk-empty-panel tgk-empty-panel--compact">
+                  <div class="tgk-empty-panel__title">No "Supplier Intake" form found</div>
+                  <p class="tgk-empty-panel__copy">Publish a public Web Form named "Supplier Intake" in this Docusign account.</p>
+                </div>
+              </template>
+
+              <div class="tgk-banner tgk-banner--danger" x-show="intakeError" x-cloak>
+                <div>
+                  <div class="tgk-banner__label">Embed</div>
+                  <div class="tgk-banner__meta" x-text="intakeError"></div>
+                </div>
+              </div>
+
+              <div class="tgk-webforms-embed__mount" x-ref="intakeMount"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+
   </main>
+
+  </div>
+  <!-- /tgk-portal-shell__body -->
+
+  <!-- Full-width sticky status bar -->
+  <footer class="tgk-portal-footer">
+    <span class="tgk-portal-footer__env" x-text="footerEnvLabel"></span>
+    <span class="tgk-portal-footer__saved">
+      <span class="tgk-portal-footer__dot"></span>
+      Last saved: <strong x-text="lastSavedAt"></strong>
+    </span>
+  </footer>
+
+  <!-- Integration inspector: floating toggle + live Docusign API drawer -->
+  <button type="button" class="tgk-api-fab" @click="toggleApiDrawer()" :class="{ 'tgk-api-fab--active': apiDrawerOpen }" title="Show live Docusign API activity">
+    <svg class="tgk-icon tgk-icon--md" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9l-4 3 4 3m8-6l4 3-4 3M14 4l-4 16"/></svg>
+    <span>API</span>
+    <template x-if="apiLog.length">
+      <span class="tgk-api-fab__badge" x-text="apiLog.length"></span>
+    </template>
+  </button>
+
+  <div class="tgk-api-drawer" :class="{ 'tgk-api-drawer--open': apiDrawerOpen }">
+    <div class="tgk-api-drawer__header">
+      <div>
+        <div class="tgk-api-drawer__title">Integration Activity</div>
+        <div class="tgk-api-drawer__subtitle">Live calls from this portal to the Docusign API</div>
+      </div>
+      <div class="u-row u-gap-2">
+        <button class="tgk-button tgk-button--secondary" @click="clearApiInspector()">Clear</button>
+        <button class="tgk-modal-close" @click="apiDrawerOpen = false" aria-label="Close"><svg class="tgk-icon tgk-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </div>
+    </div>
+
+    <div class="tgk-api-drawer__body">
+      <template x-if="apiLog.length === 0">
+        <div class="tgk-empty-panel tgk-empty-panel--compact">
+          <div class="tgk-empty-panel__title">No API activity yet</div>
+          <p class="tgk-empty-panel__copy">Open a contract or vendor — calls to Docusign appear here in real time.</p>
+        </div>
+      </template>
+
+      <template x-for="entry in apiLog" :key="entry.id">
+        <div class="tgk-api-entry" :class="{ 'tgk-api-entry--error': entry.ok === false, 'tgk-api-entry--pending': entry.pending }">
+          <div class="tgk-api-entry__row" @click="toggleApiEntry(entry.id)">
+            <span class="tgk-api-entry__method" x-text="entry.method"></span>
+            <span class="tgk-api-entry__path" x-text="entry.path"></span>
+            <span class="tgk-api-entry__status"
+              :class="entry.pending ? 'is-pending' : (entry.ok ? 'is-ok' : 'is-err')"
+              x-text="entry.pending ? '···' : entry.status"></span>
+          </div>
+          <div class="tgk-api-entry__meta">
+            <span class="tgk-api-entry__host" x-text="entry.host || 'docusign'"></span>
+            <template x-if="entry.response && entry.response.count != null">
+              <span x-text="'· ' + entry.response.count + ' records'"></span>
+            </template>
+            <template x-if="entry.durationMs != null">
+              <span x-text="'· ' + entry.durationMs + ' ms'"></span>
+            </template>
+          </div>
+
+          <template x-if="apiExpanded[entry.id]">
+            <div class="tgk-api-entry__detail">
+              <div class="tgk-api-entry__label">Request</div>
+              <pre class="tgk-api-entry__pre" x-text="entry.method + ' ' + entry.host + entry.path + (entry.query || '')"></pre>
+              <template x-if="entry.requestBody">
+                <pre class="tgk-api-entry__pre" x-text="JSON.stringify(entry.requestBody, null, 2)"></pre>
+              </template>
+              <div class="tgk-api-entry__label">Response<span x-show="entry.error" class="tgk-api-entry__label--err"> — error</span></div>
+              <pre class="tgk-api-entry__pre" x-show="!entry.error" x-text="entry.response ? entry.response.json : '(no body)'"></pre>
+              <pre class="tgk-api-entry__pre tgk-api-entry__pre--err" x-show="entry.error" x-text="entry.error"></pre>
+            </div>
+          </template>
+        </div>
+      </template>
+    </div>
+  </div>
 
   <div x-init="mountTransactionModals($el)"></div>
 </div>
