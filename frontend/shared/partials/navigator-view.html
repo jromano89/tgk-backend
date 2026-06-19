@@ -1,0 +1,85 @@
+<section
+  class="tgk-page-stack tgk-navigator-view"
+  x-data="navigatorView()"
+  x-init="$nextTick(() => { const io = new IntersectionObserver((entries) => { if (entries.some((e) => e.isIntersecting)) { initNavigator(); io.disconnect(); } }); io.observe($el); })">
+
+  <section class="tgk-surface-panel tgk-surface-panel--lg">
+    <div class="tgk-panel-heading tgk-panel-heading--spaced">
+      <div>
+        <span class="tgk-workspaces-intro__indicator">Navigator API</span>
+        <h2 class="tgk-page-title">Agreements</h2>
+        <p class="tgk-page-copy">Live agreements from this account's Docusign Navigator repository.</p>
+      </div>
+      <button class="tgk-button tgk-button--secondary" @click="loadAgreements()" :disabled="loading">
+        <span x-text="loading ? 'Refreshing…' : 'Refresh'"></span>
+      </button>
+    </div>
+
+    <div class="tgk-navigator-toolbar">
+      <input
+        class="tgk-form-input"
+        type="search"
+        placeholder="Search by title, party, type, or status…"
+        x-model="searchQuery"
+        autocomplete="off">
+    </div>
+
+    <div class="tgk-banner tgk-banner--danger" x-show="error" x-cloak>
+      <div>
+        <div class="tgk-banner__label">Navigator</div>
+        <div class="tgk-banner__meta" x-text="error"></div>
+      </div>
+    </div>
+
+    <div class="tgk-help-text" x-show="loading && !agreements.length" x-cloak>Loading agreements…</div>
+    <div class="tgk-help-text" x-show="!loading && !error && !agreements.length" x-cloak>No agreements found in this repository.</div>
+
+    <div class="tgk-table-wrap" x-show="agreements.length" x-cloak>
+      <table class="tgk-table tgk-navigator-table">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Type</th>
+            <th>Parties</th>
+            <th>Status</th>
+            <th>Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="agreement in filteredAgreements()" :key="agreement.id">
+            <tr class="tgk-navigator-row" @click="select(agreement)">
+              <td class="tgk-navigator-row__title" x-text="agreement.title"></td>
+              <td x-text="agreement.type || '—'"></td>
+              <td x-text="formatParties(agreement)"></td>
+              <td>
+                <span class="tgk-status-badge" :class="statusClasses(agreement.status)" x-text="agreement.status || 'unknown'"></span>
+              </td>
+              <td x-text="formatValue(agreement) || '—'"></td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Detail drawer -->
+  <template x-if="selected">
+    <div class="tgk-modal-shell">
+      <div class="tgk-modal-backdrop" @click="clearSelection()"></div>
+      <div class="tgk-modal-card tgk-modal-card--detail">
+        <div class="tgk-modal-header">
+          <h3 class="tgk-panel-title" x-text="selected.title"></h3>
+          <button class="tgk-button tgk-button--icon" @click="clearSelection()" aria-label="Close">✕</button>
+        </div>
+        <div class="tgk-modal-body tgk-navigator-detail">
+          <div class="tgk-settings-info-row"><span class="tgk-settings-info-label">Type</span><span class="tgk-settings-info-value" x-text="selected.type || '—'"></span></div>
+          <div class="tgk-settings-info-row"><span class="tgk-settings-info-label">Status</span><span class="tgk-settings-info-value" x-text="selected.status || '—'"></span></div>
+          <div class="tgk-settings-info-row"><span class="tgk-settings-info-label">Parties</span><span class="tgk-settings-info-value" x-text="formatParties(selected)"></span></div>
+          <div class="tgk-settings-info-row"><span class="tgk-settings-info-label">Effective</span><span class="tgk-settings-info-value" x-text="formatDate(selected.effectiveDate) || '—'"></span></div>
+          <div class="tgk-settings-info-row"><span class="tgk-settings-info-label">Expires</span><span class="tgk-settings-info-value" x-text="formatDate(selected.expirationDate) || '—'"></span></div>
+          <div class="tgk-settings-info-row"><span class="tgk-settings-info-label">Value</span><span class="tgk-settings-info-value" x-text="formatValue(selected) || '—'"></span></div>
+        </div>
+      </div>
+    </div>
+  </template>
+</section>

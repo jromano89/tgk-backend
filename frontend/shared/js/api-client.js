@@ -147,6 +147,27 @@
     };
   }
 
+  // Normalize a Navigator agreement across the API's field-name variants.
+  function mapNavigatorAgreement(agreement) {
+    const a = agreement && typeof agreement === 'object' ? agreement : {};
+    const provisions = a.provisions || {};
+    const parties = Array.isArray(a.parties) ? a.parties : [];
+    const source = a.source && typeof a.source === 'object' ? a.source : {};
+    return {
+      id: a.id || a.agreement_id || a.document_id || '',
+      title: a.file_name || a.title || a.name || a.agreement_name || 'Untitled agreement',
+      type: a.type || a.category || a.agreement_type || '',
+      status: a.status || a.agreement_status || provisions.status || '',
+      parties: parties.map((p) => p?.name_in_agreement || p?.name || '').filter(Boolean),
+      effectiveDate: provisions.effective_date || a.effective_date || '',
+      expirationDate: provisions.expiration_date || a.expiration_date || '',
+      value: provisions.total_agreement_value ?? provisions.contract_value ?? null,
+      valueCurrency: provisions.total_agreement_value_currency_code || provisions.currency_code || '',
+      sourceEnvelopeId: a.source_id || a.source_envelope_id || a.envelope_id || source.id || source.envelope_id || '',
+      raw: a
+    };
+  }
+
   function getErrorMessage(payload, fallbackMessage) {
     if (typeof payload === 'string') {
       return payload || fallbackMessage;
@@ -276,6 +297,8 @@
   const TGK_API = {
     baseUrl: window.TGK_CONFIG?.backendUrl || 'http://localhost:3000',
     docusignIamBaseUrl: window.TGK_CONFIG?.docusignIamBaseUrl || 'https://api-d.docusign.com',
+    docusignWebFormsBaseUrl: window.TGK_CONFIG?.docusignWebFormsBaseUrl || 'https://apps-d.docusign.com',
+    docusignClientId: window.TGK_CONFIG?.docusignClientId || '',
     docusignUserId: window.TGK_CONFIG?.docusignAuth?.userId || '',
     docusignAccountId: window.TGK_CONFIG?.docusignAuth?.accountId || '',
     docusignScopes: window.TGK_CONFIG?.docusignAuth?.scopes || '',
@@ -771,6 +794,82 @@
       return this.proxyResponse({
         ...options,
         accessToken: await this.getDocusignAccessToken()
+      });
+    },
+
+    // --- Docusign Navigator (Agreement Manager) — real agreements repository ---
+    // Lists agreements from the connected account's Navigator repo, optionally
+    // filtered by a party name. Uses the IAM base + JWT (adm_store_unified_repo_read).
+    async getNavigatorAgreements({ party = '', limit = 50 } = {}) {
+      const query = { limit };
+      const trimmedParty = String(party || '').trim();
+      if (trimmedParty) {
+        query['parties.name_in_agreement'] = trimmedParty;
+      }
+      const url = this.buildDocusignUrl('/v1/accounts/{accountId}/agreements', { query });
+      const result = await this.proxyDocusign({
+        method: 'GET',
+        url,
+        headers: { Accept: 'application/json' }
+      });
+      const items = Array.isArray(result)
+        ? result
+        : (result?.data || result?.agreements || result?.value || []);
+      return items.map(mapNavigatorAgreement);
+    },
+
+    // Fetch a single Navigator agreement (full provisions) by id.
+    async getNavigatorAgreement(agreementId) {
+      const id = String(agreementId || '').trim();
+      if (!id) {
+        throw new Error('Missing Navigator agreement id.');
+      }
+      const url = this.buildDocusignUrl(`/v1/accounts/{accountId}/agreements/${encodeURIComponent(id)}`);
+      const result = await this.proxyDocusign({ method: 'GET', url, headers: { Accept: 'application/json' } });
+      return mapNavigatorAgreement(result?.data || result);
+    },
+
+    // --- Docusign Web Forms — list + embeddable instance creation ---
+    // Web Forms lives on a different host (apps-d) than Navigator/Maestro (api-d).
+    webFormsUrl(path) {
+      return this.buildDocusignUrl(path, { baseUrl: this.docusignWebFormsBaseUrl });
+    },
+
+    // List the account's web forms. Returns normalized {id,name,isPublished,isEnabled,isPrivate}.
+    async getWebForms() {
+      const result = await this.proxyDocusign({
+        method: 'GET',
+        url: this.webFormsUrl('/api/webforms/v1.1/accounts/{accountId}/forms'),
+        headers: { Accept: 'application/json' }
+      });
+      const items = Array.isArray(result?.items) ? result.items : (Array.isArray(result) ? result : []);
+      return items.map((form) => {
+        const props = form?.formProperties || {};
+        return {
+          id: form?.id || '',
+          name: props.name || 'Untitled form',
+          isPublished: !!form?.isPublished,
+          isEnabled: !!form?.isEnabled,
+          isPrivate: !!props.isPrivateAccess,
+          hasDraftChanges: !!form?.hasDraftChanges,
+          raw: form
+        };
+      });
+    },
+
+    // Create an EMBEDDABLE instance. clientUserId is what makes the form embeddable
+    // (vs. a hosted, anonymous form). Returns {formUrl, instanceToken, ...} for the JS SDK.
+    async createWebFormInstance(formId, clientUserId) {
+      const id = String(formId || '').trim();
+      if (!id) {
+        throw new Error('Missing web form id.');
+      }
+      const resolvedClientUserId = String(clientUserId || '').trim() || `tgk-${this.appSlug || 'demo'}-${id}`;
+      return this.proxyDocusign({
+        method: 'POST',
+        url: this.webFormsUrl(`/api/webforms/v1.1/accounts/{accountId}/forms/${encodeURIComponent(id)}/instances`),
+        headers: { Accept: 'application/json' },
+        body: { clientUserId: resolvedClientUserId }
       });
     },
 

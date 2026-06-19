@@ -410,6 +410,27 @@ function settingsPanelState() {
     docusignConsentBusy: false,
     docusignConsentStatus: 'idle',
     docusignConsentMessage: '',
+    // 'unknown' until probed; 'connected' if a token mints, 'disconnected' otherwise.
+    docusignConnection: 'unknown',
+
+    async probeDocusignConnection() {
+      if (!this.hasDocusignAuthConfig()) {
+        this.docusignConnection = 'disconnected';
+        return;
+      }
+
+      this.docusignConnection = 'checking';
+      try {
+        await window.TGK_API.getDocusignAccessToken();
+        this.docusignConnection = 'connected';
+      } catch (error) {
+        this.docusignConnection = 'disconnected';
+      }
+    },
+
+    isDocusignConnected() {
+      return this.docusignConnection === 'connected';
+    },
 
     syncStateFromCurrent(nextCurrent = {}) {
       const resolvedCurrent = resolveCurrentSettings(nextCurrent);
@@ -509,6 +530,7 @@ function settingsPanelState() {
         window.TGK_API.clearDocusignTokenCache();
         this.docusignConsentStatus = 'success';
         this.docusignConsentMessage = 'Consent granted.';
+        await this.probeDocusignConnection();
       } catch (error) {
         this.docusignConsentStatus = 'error';
         this.docusignConsentMessage = error.message || 'Consent failed.';

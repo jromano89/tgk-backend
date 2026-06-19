@@ -67,6 +67,7 @@ const WEALTH_CONFIG = {
     { key: 'doc-gen', label: 'Doc Gen', icon: 'doc-gen' },
     { key: 'id-verification', label: 'ID Verification', icon: 'id-verification' },
     { key: 'monitor', label: 'Monitor', icon: 'monitor' },
+    { key: 'navigator', label: 'Navigator', icon: 'navigator' },
     { key: 'notary', label: 'Notary', icon: 'notary' },
     { key: 'web-forms', label: 'Web Forms', icon: 'web-forms' },
     { key: 'workspaces', label: 'Workspaces', icon: 'workspaces' }
@@ -144,6 +145,7 @@ const HEALTHCARE_CONFIG = {
     { key: 'doc-gen', label: 'Doc Gen', icon: 'doc-gen' },
     { key: 'id-verification', label: 'ID Verification', icon: 'id-verification' },
     { key: 'monitor', label: 'Monitor', icon: 'monitor' },
+    { key: 'navigator', label: 'Navigator', icon: 'navigator' },
     { key: 'notary', label: 'Notary', icon: 'notary' },
     { key: 'web-forms', label: 'Web Forms', icon: 'web-forms' },
     { key: 'workspaces', label: 'Workspaces', icon: 'workspaces' }

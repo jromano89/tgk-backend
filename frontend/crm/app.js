@@ -84,6 +84,11 @@ function crmApp() {
     activitiesLoading: false,
     activitiesLoaded: false,
     selectedContact: null,
+
+    // Navigator agreements for the selected contact's company
+    navAgreements: [],
+    navLoading: false,
+    navError: null,
     _clientDetailEventsSubscription: null,
     _clientDetailEventsTimeout: null,
     searchQuery: '',
@@ -359,6 +364,36 @@ function crmApp() {
       }
       this.setView('client');
       this.startClientDetailEvents(contact.id);
+      // Query Navigator for agreements with this contact's company.
+      void this.loadNavigatorAgreements(this.selectedContact?.company || this.selectedContact?.name);
+    },
+
+    // --- Navigator (real agreements from the connected Docusign account) ---
+    async loadNavigatorAgreements(party) {
+      this.navAgreements = [];
+      this.navError = null;
+      const name = String(party || '').trim();
+      if (!name) return;
+      this.navLoading = true;
+      try {
+        this.navAgreements = await TGK_API.getNavigatorAgreements({ party: name, limit: 50 });
+      } catch (e) {
+        console.error('Failed to load Navigator agreements:', e);
+        this.navError = e.message || 'Could not load agreements from Navigator.';
+      } finally {
+        this.navLoading = false;
+      }
+    },
+
+    openAgreementDoc(ag) {
+      if (!ag?.sourceEnvelopeId) return;
+      this.viewTransactionDoc({
+        id: ag.sourceEnvelopeId,
+        type: 'envelope',
+        name: ag.title,
+        status: ag.status,
+        data: { docusignEnvelopeId: ag.sourceEnvelopeId }
+      });
     },
 
     startClientDetailEvents(contactId) {

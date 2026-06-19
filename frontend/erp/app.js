@@ -26,7 +26,7 @@ const ERP_DEFAULT_KPIS = [
 
 function getInitialErpView() {
   const view = new URL(window.location.href).searchParams.get('view');
-  return String(view || 'orders').trim() || 'orders';
+  return String(view || 'home').trim() || 'home';
 }
 
 function erpApp() {
@@ -35,8 +35,8 @@ function erpApp() {
   return {
     ...createPortalChromeState({
       currentKey: 'view',
-      defaultView: 'orders',
-      coreViews: ['orders', 'vendors', 'invoices', 'vendorDetail', 'monitor']
+      defaultView: 'home',
+      coreViews: ['home', 'orders', 'vendors', 'invoices', 'vendorDetail', 'monitor', 'orderDetail', 'grossToNet', 'deals']
     }),
     ...createWorkflowLoadingState({
       loadingKey: 'erpSendLoading',
@@ -51,12 +51,18 @@ function erpApp() {
     }),
     ...createTransactionModalHelpers(),
 
-    view: 'orders',
+    view: 'home',
     currentUser: null,
     vendors: [],
     selectedVendor: null,
+    selectedOrder: null,
     searchQuery: '',
     loading: true,
+
+    // Navigator agreements for the selected vendor
+    navAgreements: [],
+    navLoading: false,
+    navError: null,
 
     // Invoices (transactions)
     invoices: [],
@@ -156,6 +162,103 @@ function erpApp() {
       return this.orders.filter((order) => normalizeStatusValue(order.status) !== 'completed').length;
     },
 
+    // --- Launchpad (home) ---
+    get launchpadGroups() {
+      return window.ERP_MOCK?.launchpadGroups || [];
+    },
+
+    // --- Order object page (drill-down from an Orders row) ---
+    viewOrder(order) {
+      this.selectedOrder = order;
+      this.setView('orderDetail');
+    },
+
+    backToOrders() {
+      this.setView('orders');
+      this.selectedOrder = null;
+    },
+
+    get orderFacets() {
+      return window.ERP_MOCK?.orderFacets || {};
+    },
+
+    // order.name is the PO display name, e.g. "PO-10482".
+    get selectedOrderPo() {
+      return String(this.selectedOrder?.name || '').trim();
+    },
+
+    get selectedOrderLineItems() {
+      return window.ERP_MOCK?.orderLineItemsByPo?.[this.selectedOrderPo] || [];
+    },
+
+    get selectedOrderLinkedDocs() {
+      return window.ERP_MOCK?.orderLinkedDocsByPo?.[this.selectedOrderPo] || [];
+    },
+
+    lineNetAmount(li) {
+      return (Number(li?.qty) || 0) * (Number(li?.unitPrice) || 0);
+    },
+
+    get selectedOrderNet() {
+      return this.selectedOrderLineItems.reduce((sum, li) => sum + this.lineNetAmount(li), 0);
+    },
+
+    // --- Gross-to-Net bridge ---
+    get grossToNetRows() {
+      const steps = window.ERP_MOCK?.grossToNet?.steps || [];
+      const gross = steps.find((s) => s.kind === 'base')?.amount || 1;
+      let running = 0;
+      return steps.map((s) => {
+        if (s.kind === 'deduction') running += s.amount; // deduction amounts are negative
+        else running = s.amount; // base / net are absolute running balances
+        return { ...s, running, pct: Math.max(0, (running / gross) * 100) };
+      });
+    },
+
+    get grossToNetPeriod() {
+      return window.ERP_MOCK?.grossToNet?.period || '';
+    },
+
+    get grossToNetGross() {
+      return window.ERP_MOCK?.grossToNet?.steps?.find((s) => s.kind === 'base')?.amount || 0;
+    },
+
+    get grossToNetNet() {
+      return window.ERP_MOCK?.grossToNet?.steps?.find((s) => s.kind === 'net')?.amount || 0;
+    },
+
+    get grossToNetPct() {
+      const gross = this.grossToNetGross;
+      return gross ? this.grossToNetNet / gross : 0;
+    },
+
+    // --- Deals & Rebates ---
+    get deals() {
+      return window.ERP_MOCK?.deals || [];
+    },
+
+    get rebatePrograms() {
+      return window.ERP_MOCK?.rebatePrograms || [];
+    },
+
+    dealNetUnit(li) {
+      return (Number(li?.list) || 0) * (1 - (Number(li?.discountPct) || 0) / 100);
+    },
+
+    rebateAttainment(program) {
+      return program?.targetVol ? program.actualVol / program.targetVol : 0;
+    },
+
+    rebateOutstanding(program) {
+      return (Number(program?.accrued) || 0) - (Number(program?.paid) || 0);
+    },
+
+    // Plain percentage (no leading sign) for ratios like GTN % and attainment.
+    fmtRatioPct(ratio) {
+      const pct = (Number(ratio) || 0) * 100;
+      return pct.toFixed(1) + '%';
+    },
+
     get filteredVendors() {
       if (!this.searchQuery.trim()) return this.vendors;
       const q = this.searchQuery.toLowerCase();
@@ -247,6 +350,36 @@ function erpApp() {
         console.error('Failed to load vendor detail:', e);
       }
       this.setView('vendorDetail');
+      // Vendor name is the company — query Navigator for matching agreements.
+      void this.loadNavigatorAgreements(this.selectedVendor?.name);
+    },
+
+    // --- Navigator (real agreements from the connected Docusign account) ---
+    async loadNavigatorAgreements(party) {
+      this.navAgreements = [];
+      this.navError = null;
+      const name = String(party || '').trim();
+      if (!name) return;
+      this.navLoading = true;
+      try {
+        this.navAgreements = await TGK_API.getNavigatorAgreements({ party: name, limit: 50 });
+      } catch (e) {
+        console.error('Failed to load Navigator agreements:', e);
+        this.navError = e.message || 'Could not load agreements from Navigator.';
+      } finally {
+        this.navLoading = false;
+      }
+    },
+
+    openAgreementDoc(ag) {
+      if (!ag?.sourceEnvelopeId) return;
+      this.viewTransactionDoc({
+        id: ag.sourceEnvelopeId,
+        type: 'envelope',
+        name: ag.title,
+        status: ag.status,
+        data: { docusignEnvelopeId: ag.sourceEnvelopeId }
+      });
     },
 
     goBack() {

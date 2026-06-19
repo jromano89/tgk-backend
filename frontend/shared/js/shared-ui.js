@@ -183,9 +183,11 @@ function getIamProduct(productKey) {
   return getConfiguredIamProducts().find((product) => product.key === key) || null;
 }
 
+const IAM_PRODUCTS_WITH_VIEW = new Set(['monitor', 'workspaces', 'navigator', 'web-forms']);
+
 function getIamProductPlaceholder(productKey) {
   const product = getIamProduct(productKey);
-  if (!product || product.key === 'monitor' || product.key === 'workspaces') {
+  if (!product || IAM_PRODUCTS_WITH_VIEW.has(product.key)) {
     return null;
   }
 
@@ -333,7 +335,7 @@ function newsPanelTemplate() {
           <div class="tgk-news-sheet">
             <div class="tgk-news-header">
               <h2 class="tgk-news-title">Market Headlines</h2>
-              <button @click="open = false" class="tgk-modal-close">&times;</button>
+              <button @click="open = false" class="tgk-modal-close"><svg class="tgk-icon tgk-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
             </div>
             <input x-model="search" placeholder="Filter headlines" class="tgk-form-input tgk-news-search">
             <div class="tgk-news-filter-bar">
@@ -702,7 +704,7 @@ function createTransactionModalHelpers() {
 
 function sharedSettingsTemplate() {
   return `
-    <section class="tgk-settings-shell">
+    <section class="tgk-settings-shell" x-init="probeDocusignConnection()">
       <div class="tgk-settings-grid">
         <div class="tgk-settings-stack">
           <section class="tgk-settings-card">
@@ -724,19 +726,29 @@ function sharedSettingsTemplate() {
 
               <div class="tgk-settings-consent-row tgk-settings-consent-row--separated">
                 <div class="tgk-settings-consent-copy">
-                  <p class="tgk-help-text">Consent is still required before calling DocuSign APIs.</p>
+                  <p class="tgk-help-text" x-show="docusignConnection === 'checking'" x-cloak>Checking Docusign connection…</p>
+                  <p class="tgk-help-text" x-show="isDocusignConnected()" x-cloak :style="'color:#067647;'">
+                    &#10003; Connected — Docusign APIs are authorized.
+                  </p>
+                  <p class="tgk-help-text" x-show="docusignConnection === 'disconnected'" x-cloak>Consent is required before calling Docusign APIs.</p>
                 </div>
                 <button
+                  x-show="docusignConnection !== 'connected'"
                   @click="grantDocusignConsent()"
                   :disabled="docusignConsentBusy || !hasDocusignAuthConfig()"
                   class="tgk-button tgk-button--secondary"
                   x-text="docusignConsentBusy ? 'Waiting...' : 'Grant Consent'"></button>
+                <button
+                  x-show="docusignConnection === 'connected'"
+                  @click="probeDocusignConnection()"
+                  class="tgk-button tgk-button--ghost"
+                  x-cloak>Re-check</button>
               </div>
               <p
-                x-show="docusignConsentMessage || !hasDocusignAuthConfig()"
+                x-show="docusignConsentMessage"
                 class="tgk-help-text tgk-help-text--compact"
                 :style="docusignConsentStatus === 'error' ? 'color:#b42318;' : docusignConsentStatus === 'success' ? 'color:#067647;' : ''"
-                x-text="docusignConsentMessage || 'Configure frontend/config.js first.'"></p>
+                x-text="docusignConsentMessage"></p>
             </div>
           </section>
 
@@ -832,7 +844,7 @@ function sharedSettingsTemplate() {
 
                       <div class="tgk-settings-profile-actions">
                         <button @click.stop="saveProfile(profile.id)" class="tgk-button tgk-button--secondary tgk-button--compact" type="button">Save</button>
-                        <button @click.stop="deleteProfile(profile.id)" class="tgk-settings-profile-delete" type="button" aria-label="Delete profile">&times;</button>
+                        <button @click.stop="deleteProfile(profile.id)" class="tgk-settings-profile-delete" type="button" aria-label="Delete profile"><svg class="tgk-icon tgk-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
                       </div>
                     </article>
                   </template>
@@ -871,7 +883,7 @@ function sharedTransactionModalTemplate() {
               <div class="tgk-modal-meta" x-text="transactionDocModal.transactionId"></div>
             </div>
             <div class="tgk-inline-actions tgk-inline-actions--end">
-              <button @click="closeTransactionDocModal()" class="tgk-modal-close" aria-label="Close document preview">&times;</button>
+              <button @click="closeTransactionDocModal()" class="tgk-modal-close" aria-label="Close document preview"><svg class="tgk-icon tgk-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
             </div>
           </div>
 
@@ -911,7 +923,7 @@ function sharedTransactionModalTemplate() {
               <h3 class="tgk-modal-title" x-text="transactionHistoryModal.title"></h3>
               <div class="tgk-modal-meta" x-text="transactionHistoryModal.transactionId"></div>
             </div>
-            <button @click="closeTransactionHistoryModal()" class="tgk-modal-close" aria-label="Close document history">&times;</button>
+            <button @click="closeTransactionHistoryModal()" class="tgk-modal-close" aria-label="Close document history"><svg class="tgk-icon tgk-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
           </div>
 
           <div class="tgk-modal-body tgk-modal-body--history">

@@ -4553,6 +4553,13 @@ table {
   transition: transform 160ms ease,box-shadow 160ms ease,background 160ms ease,border-color 160ms ease
 }
 
+.launch-cta__arrow {
+  width: 1.05em;
+  height: 1.05em;
+  margin-left: 0.45em;
+  flex: 0 0 auto
+}
+
 .launch-cta {
   background: var(--tgk-cobalt);
   color: var(--tgk-white);
@@ -4611,78 +4618,111 @@ table {
 }
 
 /* ============================================================
-   Enterprise skin — conservative, flat, square theme scoped to
-   the generic CRM/ERP portals via body.tgk-skin-enterprise.
-   settings-panel.js sets the brand vars inline on <body>, so this
-   skin overrides concrete properties with literal neutral values
-   rather than relying on the --color-* custom properties.
-   Palette: charcoal chrome, flat gray canvas, single steel accent.
+   Brand skin — Docusign design-system FORM scoped to the generic
+   CRM/ERP portals via body.tgk-skin-enterprise (internal hook name).
+   Adopts the warm Ecru canvas, white rounded cards, and soft shadows
+   from the provided style guide, but each portal supplies its OWN
+   accent palette via --skin-accent* tokens (CRM sapphire, ERP teal).
+   settings-panel.js sets --color-* inline on <body>; this skin uses
+   independent --skin-* tokens, with !important only where a base rule
+   reads an inline-set var (avatars).
    ============================================================ */
 
-/* Canvas — flat neutral gray, no gradient wash */
-.tgk-skin-enterprise.tgk-portal-body {
-  background-image: none;
-  background-color: #ebedf0
+/* Shared design-system tokens (from STYLE_GUIDE.css) */
+.tgk-skin-enterprise {
+  --skin-canvas: #f8f3f0;
+  --skin-card: #ffffff;
+  --skin-radius: 10px;
+  --skin-radius-sm: 6px;
+  --skin-shadow: 0 2px 12px rgba(17,24,39,0.07);
+  --skin-shadow-lg: 0 8px 28px rgba(17,24,39,0.12);
+  --skin-text: #111827;
+  --skin-muted: #6b7280
 }
 
-/* Sidebar — flat charcoal, square */
+/* Per-portal accent palettes — custom, NOT Docusign cobalt/violet */
+.tgk-skin-enterprise[data-portal='crm'] {
+  --skin-accent: #1f4fb0;        /* sapphire */
+  --skin-accent-hover: #18408f;
+  --skin-accent-dark: #15315e;   /* deep navy chrome */
+  --skin-accent-light: #eaeffa;
+  --skin-border: #cbd8f0
+}
+
+.tgk-skin-enterprise[data-portal='erp'] {
+  --skin-accent: #0f766e;        /* teal */
+  --skin-accent-hover: #0c5f59;
+  --skin-accent-dark: #134e4a;   /* deep teal chrome */
+  --skin-accent-light: #e4f1ef;
+  --skin-border: #bfe0db
+}
+
+/* Canvas — warm Ecru, flat (no gradient wash) */
+.tgk-skin-enterprise.tgk-portal-body {
+  background-image: none;
+  background-color: var(--skin-canvas)
+}
+
+/* Sidebar / chrome — deep accent */
 .tgk-skin-enterprise .tgk-portal-sidebar {
-  background: #1f2630;
-  border-right: 1px solid #121821
+  background: var(--skin-accent-dark);
+  border-right: none
 }
 
 .tgk-skin-enterprise .tgk-portal-brand__mark {
-  border-radius: 4px;
-  background: #34557a;
+  border-radius: var(--skin-radius-sm);
+  background: var(--skin-accent);
   box-shadow: none
 }
 
 .tgk-skin-enterprise .tgk-portal-nav__item {
-  border-radius: 4px
+  border-radius: var(--skin-radius-sm)
 }
 
 .tgk-skin-enterprise .tgk-portal-nav__item--active {
-  background: rgba(255,255,255,0.07);
-  border-color: rgba(255,255,255,0.12);
-  border-left: 2px solid #6b93c4;
+  background: rgba(255,255,255,0.10);
+  border-color: rgba(255,255,255,0.14);
   box-shadow: none;
   color: #fff
 }
 
-.tgk-skin-enterprise .tgk-portal-user__avatar {
-  border-radius: 4px
-}
-
-/* Panels & cards — white, 1px border, flat, square */
+/* Panels & cards — white, rounded, soft shadow, accent-tinted border */
 .tgk-skin-enterprise .tgk-surface-panel {
-  background: #ffffff;
-  border: 1px solid #d8dce2;
-  border-radius: 4px;
-  box-shadow: none
+  background: var(--skin-card);
+  border: 1px solid var(--skin-border);
+  border-radius: var(--skin-radius);
+  box-shadow: var(--skin-shadow)
 }
 
 .tgk-skin-enterprise .tgk-account-card,
-.tgk-skin-enterprise .tgk-record-row,
 .tgk-skin-enterprise .tgk-agreements-kpi-card,
 .tgk-skin-enterprise .tgk-agreements-panel,
-.tgk-skin-enterprise .tgk-profile-card,
-.tgk-skin-enterprise .tgk-modal-card {
-  border-radius: 4px;
+.tgk-skin-enterprise .tgk-profile-card {
+  border-radius: var(--skin-radius);
   box-shadow: none
+}
+
+.tgk-skin-enterprise .tgk-modal-card {
+  border-radius: var(--skin-radius);
+  box-shadow: var(--skin-shadow-lg)
 }
 
 .tgk-skin-enterprise .tgk-account-card {
-  border: 1px solid #e2e5ea;
-  background: #fbfcfd
+  border: 1px solid var(--skin-border);
+  background: #fcfdff
 }
 
-/* KPI — white, 1px border, single steel accent stripe, sans tabular value */
+.tgk-skin-enterprise .tgk-record-row {
+  border-radius: var(--skin-radius-sm)
+}
+
+/* KPI — white, rounded, soft shadow, accent stripe, sans tabular value */
 .tgk-skin-enterprise .tgk-kpi {
-  background: #ffffff;
-  border: 1px solid #d8dce2;
-  border-left: 3px solid #34557a;
-  border-radius: 4px;
-  box-shadow: none
+  background: var(--skin-card);
+  border: 1px solid var(--skin-border);
+  border-left: 3px solid var(--skin-accent);
+  border-radius: var(--skin-radius);
+  box-shadow: var(--skin-shadow)
 }
 
 .tgk-skin-enterprise .tgk-kpi__value {
@@ -4691,7 +4731,23 @@ table {
   letter-spacing: -0.01em
 }
 
-/* Neutralize the rainbow KPI tone-borders into one steel accent */
+/* Drop the Georgia serif fallback on names/values — system sans only */
+.tgk-skin-enterprise .tgk-profile-card__name,
+.tgk-skin-enterprise .tgk-account-card__value,
+.tgk-skin-enterprise .tgk-hero-card__value,
+.tgk-skin-enterprise .tgk-agreements-donut-total,
+.tgk-skin-enterprise .tgk-agreements-kpi-value {
+  font-family: var(--tgk-font-sans,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif)
+}
+
+.tgk-skin-enterprise .tgk-account-card__value,
+.tgk-skin-enterprise .tgk-hero-card__value,
+.tgk-skin-enterprise .tgk-agreements-donut-total,
+.tgk-skin-enterprise .tgk-agreements-kpi-value {
+  font-variant-numeric: tabular-nums
+}
+
+/* Single accent stripe for all KPI tone-borders (no rainbow) */
 .tgk-skin-enterprise .tgk-tone-border--neutral,
 .tgk-skin-enterprise .tgk-tone-border--amber,
 .tgk-skin-enterprise .tgk-tone-border--red,
@@ -4699,33 +4755,39 @@ table {
 .tgk-skin-enterprise .tgk-tone-border--sky,
 .tgk-skin-enterprise .tgk-tone-border--violet,
 .tgk-skin-enterprise .tgk-tone-border--emerald {
-  border-left-color: #34557a
+  border-left-color: var(--skin-accent)
 }
 
-/* Buttons — flat, square, restrained steel */
+/* Buttons — rounded, accent fill, soft shadow */
 .tgk-skin-enterprise .tgk-button {
-  border-radius: 3px
+  border-radius: var(--skin-radius-sm)
 }
 
 .tgk-skin-enterprise .tgk-button--primary {
-  background: #34557a;
-  border-color: #294156;
-  box-shadow: none
+  background: var(--skin-accent);
+  border-color: var(--skin-accent);
+  box-shadow: var(--skin-shadow)
 }
 
 .tgk-skin-enterprise .tgk-button--primary:hover {
-  background: #2b4767;
-  border-color: #21384c;
-  box-shadow: none
+  background: var(--skin-accent-hover);
+  border-color: var(--skin-accent-hover);
+  box-shadow: var(--skin-shadow)
 }
 
 .tgk-skin-enterprise .tgk-button--secondary {
+  border-color: var(--skin-border);
   box-shadow: none
 }
 
-/* Tables — grid dividers, neutral hover, square avatars */
+.tgk-skin-enterprise .tgk-button--secondary:hover {
+  border-color: var(--skin-accent);
+  color: var(--skin-accent)
+}
+
+/* Tables — soft row dividers, accent-tinted hover */
 .tgk-skin-enterprise .tgk-data-table__row {
-  border-bottom: 1px solid #e8eaef
+  border-bottom: 1px solid #efe9e4
 }
 
 .tgk-skin-enterprise .tgk-data-table__row:nth-child(even) {
@@ -4733,40 +4795,267 @@ table {
 }
 
 .tgk-skin-enterprise .tgk-data-table__row:hover {
-  background: #f2f5f8
+  background: var(--skin-accent-light)
 }
 
-.tgk-skin-enterprise .tgk-data-table__avatar,
-.tgk-skin-enterprise .tgk-profile-card__avatar {
-  border-radius: 4px
-}
-
-/* Uniform slate avatars (data-driven/brand colors are set inline → !important) */
+/* Avatars — rounded, accent-toned (inline brand color → !important) */
 .tgk-skin-enterprise .tgk-data-table__avatar,
 .tgk-skin-enterprise .tgk-profile-card__avatar,
 .tgk-skin-enterprise .tgk-portal-user__avatar {
-  background: #5b6573 !important;
+  border-radius: 8px;
+  background: var(--skin-accent-dark) !important;
   color: #ffffff
 }
 
-/* Status — square, muted, uppercase tag */
+/* Status — rounded pill, muted */
 .tgk-skin-enterprise .tgk-status-badge {
-  border-radius: 3px;
-  padding: 3px 7px;
+  border-radius: 999px;
+  padding: 4px 10px;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase
 }
 
-/* Inputs & search — square */
+/* Inputs & search — rounded, accent focus */
 .tgk-skin-enterprise .tgk-form-input,
 .tgk-skin-enterprise .tgk-search-field {
-  border-radius: 3px
+  border-radius: var(--skin-radius-sm)
 }
 
-/* Headings — tighter, businesslike */
+.tgk-skin-enterprise .tgk-form-input:focus,
+.tgk-skin-enterprise .tgk-search-field:focus-within {
+  border-color: var(--skin-accent)
+}
+
+/* Headings — brand tone */
 .tgk-skin-enterprise .tgk-page-title {
+  color: var(--skin-accent-dark);
+  font-weight: 700;
+  letter-spacing: -0.02em
+}
+
+/* Workflow / send modal accents follow the portal palette */
+.tgk-skin-enterprise .tgk-pill--brand {
+  background: var(--skin-accent-light);
+  color: var(--skin-accent)
+}
+
+.tgk-skin-enterprise .tgk-workflow-progress__bar {
+  background: var(--skin-accent)
+}
+
+/* ===== Navigator + Web Forms IAM views ===== */
+.tgk-navigator-toolbar {
+  margin: 12px 0 16px;
+}
+.tgk-navigator-toolbar .tgk-form-input {
+  max-width: 420px;
+}
+
+.tgk-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--tgk-border);
+  border-radius: 12px;
+}
+.tgk-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.tgk-table thead th {
+  text-align: left;
+  padding: 10px 14px;
+  font-size: 12px;
   font-weight: 600;
-  letter-spacing: -0.01em
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--tgk-text-muted);
+  background: var(--tgk-surface-soft);
+  border-bottom: 1px solid var(--tgk-border);
+}
+.tgk-table tbody td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--tgk-border);
+  color: var(--tgk-text);
+  vertical-align: middle;
+}
+.tgk-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+.tgk-navigator-row {
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+.tgk-navigator-row:hover {
+  background: var(--tgk-surface-soft);
+}
+.tgk-navigator-row__title {
+  font-weight: 600;
+}
+.tgk-navigator-detail .tgk-settings-info-row {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--tgk-border);
+}
+.tgk-modal-card--detail {
+  max-width: 520px;
+  width: 100%;
+}
+
+.tgk-button--icon {
+  padding: 6px 10px;
+  line-height: 1;
+  background: transparent;
+  border: 1px solid var(--tgk-border);
+}
+.tgk-button--ghost {
+  background: transparent;
+  border: 1px solid var(--tgk-border);
+}
+
+/* Web Forms */
+.tgk-webforms-layout {
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) 1fr;
+  gap: 18px;
+  align-items: start;
+}
+@media (max-width: 860px) {
+  .tgk-webforms-layout {
+    grid-template-columns: 1fr;
+  }
+}
+.tgk-webforms-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.tgk-webforms-list__item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  text-align: left;
+  padding: 12px 14px;
+  border: 1px solid var(--tgk-border);
+  border-radius: 10px;
+  background: var(--tgk-surface);
+  cursor: pointer;
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+.tgk-webforms-list__item:hover {
+  border-color: var(--color-brand);
+}
+.tgk-webforms-list__item--active {
+  border-color: var(--color-brand);
+  background: var(--color-brand-light);
+}
+.tgk-webforms-list__name {
+  font-weight: 600;
+  color: var(--tgk-text);
+}
+.tgk-webforms-list__meta {
+  font-size: 11px;
+  color: var(--tgk-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.tgk-webforms-embed {
+  min-height: 520px;
+  border: 1px solid var(--tgk-border);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.tgk-webforms-embed__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--tgk-border);
+}
+.tgk-webforms-embed__title {
+  font-weight: 600;
+  color: var(--tgk-text);
+}
+.tgk-webforms-embed__status,
+.tgk-webforms-embed__placeholder {
+  color: var(--tgk-text-muted);
+  font-size: 14px;
+  padding: 24px 8px;
+  text-align: center;
+}
+.tgk-webforms-embed__mount {
+  flex: 1;
+  min-height: 460px;
+}
+.tgk-webforms-embed__mount iframe {
+  width: 100%;
+  min-height: 460px;
+  border: 0;
+}
+
+/* ===== Gross-to-net bridge (skin-neutral; used by the ERP Gross-to-Net view) ===== */
+.tgk-waterfall {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.tgk-waterfall__row {
+  display: grid;
+  grid-template-columns: minmax(170px, 1.3fr) minmax(0, 3fr) minmax(96px, auto) minmax(96px, auto);
+  align-items: center;
+  gap: 14px;
+}
+.tgk-waterfall__label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+}
+.tgk-waterfall__track {
+  height: 14px;
+  border-radius: 7px;
+  background: rgba(148, 163, 184, 0.18);
+  overflow: hidden;
+}
+.tgk-waterfall__bar {
+  height: 100%;
+  border-radius: 7px;
+  transition: width 0.3s ease;
+}
+.tgk-waterfall__bar--base {
+  background: var(--color-brand, #0f766e);
+}
+.tgk-waterfall__bar--net {
+  background: #059669;
+}
+.tgk-waterfall__bar--deduction {
+  background: #f59e0b;
+}
+.tgk-waterfall__amount {
+  font-size: 13px;
+  font-weight: 600;
+  text-align: right;
+  color: #0f172a;
+}
+.tgk-waterfall__amount--neg {
+  color: #b45309;
+}
+.tgk-waterfall__running {
+  font-size: 13px;
+  font-weight: 700;
+  text-align: right;
+  color: #0f172a;
+}
+@media (max-width: 720px) {
+  .tgk-waterfall__row {
+    grid-template-columns: 1fr auto;
+  }
+  .tgk-waterfall__track {
+    grid-column: 1 / -1;
+    order: 3;
+  }
 }

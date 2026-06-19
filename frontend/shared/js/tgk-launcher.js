@@ -120,10 +120,10 @@
       const secondaryPortalLabel = isOnboarding ? clientLabel : advisorLabel;
 
       primaryLink.href = `${instancePrefix}${primaryRoute}?mode=advanced`;
-      if (primaryLabel) primaryLabel.textContent = `Launch ${primaryPortalLabel} \u2192`;
+      if (primaryLabel) primaryLabel.textContent = `Launch ${primaryPortalLabel}`;
 
       if (secondaryLink) secondaryLink.href = `${instancePrefix}${secondaryRoute}?mode=advanced`;
-      if (secondaryLabel) secondaryLabel.textContent = `Open ${secondaryPortalLabel} \u2192`;
+      if (secondaryLabel) secondaryLabel.textContent = `Open ${secondaryPortalLabel}`;
 
       // Generic CRM/ERP portals are standalone archetypes with their own
       // seeded data/vocabulary — they always open bare (never instance-scoped),

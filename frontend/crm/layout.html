@@ -260,6 +260,61 @@
                 </template>
               </div>
             </div>
+
+            <div class="tgk-surface-panel tgk-surface-panel--md">
+              <div class="tgk-panel-heading tgk-panel-heading--spaced">
+                <h3 class="tgk-panel-title">Agreements</h3>
+                <span class="tgk-pill tgk-pill--brand">Docusign Navigator</span>
+              </div>
+              <template x-if="navLoading">
+                <div class="tgk-inline-message">Searching Navigator for agreements…</div>
+              </template>
+              <template x-if="!navLoading && navError">
+                <div class="tgk-inline-message" x-text="navError"></div>
+              </template>
+              <template x-if="!navLoading && !navError && navAgreements.length === 0">
+                <div class="tgk-empty-panel tgk-empty-panel--compact">
+                  <div class="tgk-empty-panel__title">No agreements found</div>
+                  <p class="tgk-empty-panel__copy">No Navigator agreements matched this company.</p>
+                </div>
+              </template>
+              <div class="tgk-record-list" x-show="!navLoading && navAgreements.length > 0">
+                <template x-for="ag in navAgreements" :key="ag.id">
+                  <div class="tgk-record-row">
+                    <div class="tgk-record-row__main">
+                      <div class="tgk-record-row__content">
+                        <div class="tgk-record-row__title" x-text="ag.title"></div>
+                        <div class="tgk-record-row__meta">
+                          <span x-text="ag.type || 'Agreement'"></span>
+                          <template x-if="ag.effectiveDate">
+                            <span class="u-row u-gap-2">
+                              <span class="tgk-record-row__meta-dot"></span>
+                              <span x-text="'Effective ' + ag.effectiveDate"></span>
+                            </span>
+                          </template>
+                          <template x-if="ag.value">
+                            <span class="u-row u-gap-2">
+                              <span class="tgk-record-row__meta-dot"></span>
+                              <span x-text="fmtMoney(ag.value)"></span>
+                            </span>
+                          </template>
+                        </div>
+                      </div>
+                      <div class="tgk-record-row__actions">
+                        <template x-if="ag.sourceEnvelopeId">
+                          <button @click="openAgreementDoc(ag)" class="tgk-icon-button" title="View document">
+                            <svg class="tgk-icon tgk-icon--md" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                          </button>
+                        </template>
+                      </div>
+                    </div>
+                    <template x-if="ag.status">
+                      <span class="tgk-status-badge" :class="statusClasses(ag.status)" x-text="ag.status"></span>
+                    </template>
+                  </div>
+                </template>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -492,6 +547,12 @@
     <!-- WORKSPACES VIEW -->
     <div x-show="view === 'workspaces'" class="tgk-page-shell u-scroll-y" data-partial="../shared/partials/workspaces-view.html"></div>
 
+    <!-- NAVIGATOR VIEW -->
+    <div x-show="view === 'navigator'" class="tgk-page-shell u-scroll-y" data-partial="../shared/partials/navigator-view.html"></div>
+
+    <!-- WEB FORMS VIEW -->
+    <div x-show="view === 'web-forms'" class="tgk-page-shell u-scroll-y" data-partial="../shared/partials/web-forms-view.html"></div>
+
     <!-- IAM PRODUCT PLACEHOLDER -->
     <div x-show="getCurrentIamPlaceholder()" class="tgk-page-shell" data-partial="../shared/partials/iam-placeholder-view.html"></div>
 
@@ -514,7 +575,7 @@
                   Open in New Tab
                 </a>
               </template>
-              <button @click="closeOnboarding()" class="tgk-modal-close">&times;</button>
+              <button @click="closeOnboarding()" class="tgk-modal-close" aria-label="Close"><svg class="tgk-icon tgk-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
             </div>
           </div>
 
@@ -535,7 +596,10 @@
                   <div class="tgk-workflow-step-list">
                     <template x-for="(step, index) in onboardingLoadingSteps" :key="step">
                       <div class="tgk-workflow-step" :class="{ 'tgk-workflow-step--active': index <= onboardingLoadingIndex }">
-                        <span class="tgk-workflow-step__index" :class="{ 'tgk-workflow-step__index--active': index <= onboardingLoadingIndex }" x-text="index < onboardingLoadingIndex ? '✓' : index + 1"></span>
+                        <span class="tgk-workflow-step__index" :class="{ 'tgk-workflow-step__index--active': index <= onboardingLoadingIndex }">
+                          <svg x-show="index < onboardingLoadingIndex" class="tgk-icon tgk-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg>
+                          <span x-show="index >= onboardingLoadingIndex" x-text="index + 1"></span>
+                        </span>
                         <span class="tgk-workflow-step__label" :class="{ 'tgk-workflow-step__label--active': index <= onboardingLoadingIndex }" x-text="step"></span>
                       </div>
                     </template>

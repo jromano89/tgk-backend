@@ -1,0 +1,73 @@
+<section
+  class="tgk-page-stack tgk-webforms-view"
+  x-data="webFormsView()"
+  x-init="$nextTick(() => { const io = new IntersectionObserver((entries) => { if (entries.some((e) => e.isIntersecting)) { initWebForms(); io.disconnect(); } }); io.observe($el); })">
+
+  <section class="tgk-surface-panel tgk-surface-panel--lg">
+    <div class="tgk-panel-heading tgk-panel-heading--spaced">
+      <div>
+        <span class="tgk-workspaces-intro__indicator">Web Forms API</span>
+        <h2 class="tgk-page-title">Web Forms</h2>
+        <p class="tgk-page-copy">Select a published form to embed it directly in the portal.</p>
+      </div>
+      <button class="tgk-button tgk-button--secondary" @click="loadForms()" :disabled="loading">
+        <span x-text="loading ? 'Refreshing…' : 'Refresh'"></span>
+      </button>
+    </div>
+
+    <div class="tgk-banner tgk-banner--danger" x-show="error" x-cloak>
+      <div>
+        <div class="tgk-banner__label">Web Forms</div>
+        <div class="tgk-banner__meta" x-text="error"></div>
+      </div>
+    </div>
+
+    <div class="tgk-help-text" x-show="loading && !forms.length" x-cloak>Loading forms…</div>
+    <div class="tgk-help-text" x-show="!loading && !error && !forms.length" x-cloak>No embeddable forms found.</div>
+
+    <div class="tgk-webforms-layout" x-show="forms.length" x-cloak>
+      <!-- Form list -->
+      <div class="tgk-webforms-list">
+        <template x-for="form in forms" :key="form.id">
+          <button
+            class="tgk-webforms-list__item"
+            :class="{ 'tgk-webforms-list__item--active': isSelected(form.id) }"
+            @click="embed(form)">
+            <span class="tgk-webforms-list__name" x-text="form.name"></span>
+            <span class="tgk-webforms-list__meta" x-show="form.hasDraftChanges">draft changes</span>
+          </button>
+        </template>
+        <p class="tgk-help-text tgk-help-text--compact" x-show="hiddenCount > 0" x-cloak>
+          <span x-text="hiddenCount"></span> form(s) hidden (private or unpublished — not embeddable).
+        </p>
+      </div>
+
+      <!-- Embed surface -->
+      <div class="tgk-webforms-embed">
+        <div class="tgk-webforms-embed__bar" x-show="selectedFormId" x-cloak>
+          <span class="tgk-webforms-embed__title" x-text="selectedFormName()"></span>
+          <button class="tgk-button tgk-button--icon" @click="closeEmbed()" aria-label="Close form">✕</button>
+        </div>
+
+        <div class="tgk-webforms-embed__status" x-show="embedding" x-cloak>Preparing embedded form…</div>
+
+        <div class="tgk-banner tgk-banner--danger" x-show="embedError" x-cloak>
+          <div>
+            <div class="tgk-banner__label">Embed</div>
+            <div class="tgk-banner__meta" x-text="embedError"></div>
+          </div>
+        </div>
+
+        <div class="tgk-webforms-embed__placeholder" x-show="!selectedFormId && !embedding" x-cloak>
+          Pick a form on the left to embed it here.
+        </div>
+
+        <div class="tgk-webforms-embed__mount" x-ref="embedMount"></div>
+
+        <p class="tgk-help-text tgk-help-text--compact" x-show="selectedFormId && !embedError" x-cloak>
+          Submissions are handled by Docusign and are not tracked back to the portal.
+        </p>
+      </div>
+    </div>
+  </section>
+</section>

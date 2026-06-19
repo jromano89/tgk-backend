@@ -13,11 +13,18 @@
 
     <!-- Nav -->
     <nav class="tgk-portal-nav">
+      <button @click="setView('home')"
+        class="tgk-portal-nav__item"
+        :class="{ 'tgk-portal-nav__item--active': view === 'home', 'tgk-portal-nav__item--collapsed': sidebarCollapsed }">
+        <svg class="tgk-portal-nav__icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 12l9-9 9 9"/><path d="M5 10v10a1 1 0 001 1h12a1 1 0 001-1V10"/><path d="M9 21v-6h6v6"/></svg>
+        <span x-show="!sidebarCollapsed" class="tgk-portal-nav__label">Home</span>
+      </button>
+
       <div x-show="!sidebarCollapsed" class="tgk-portal-nav__section">Operations</div>
 
       <button @click="setView('orders')"
         class="tgk-portal-nav__item"
-        :class="{ 'tgk-portal-nav__item--active': view === 'orders', 'tgk-portal-nav__item--collapsed': sidebarCollapsed }">
+        :class="{ 'tgk-portal-nav__item--active': view === 'orders' || view === 'orderDetail', 'tgk-portal-nav__item--collapsed': sidebarCollapsed }">
         <svg class="tgk-portal-nav__icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
         <span x-show="!sidebarCollapsed" class="tgk-portal-nav__label">Orders</span>
       </button>
@@ -32,6 +39,21 @@
         :class="{ 'tgk-portal-nav__item--active': view === 'invoices', 'tgk-portal-nav__item--collapsed': sidebarCollapsed }">
         <svg class="tgk-portal-nav__icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
         <span x-show="!sidebarCollapsed" class="tgk-portal-nav__label">Invoices &amp; Approvals</span>
+      </button>
+
+      <div x-show="!sidebarCollapsed" class="tgk-portal-nav__section">Revenue</div>
+
+      <button @click="setView('grossToNet')"
+        class="tgk-portal-nav__item"
+        :class="{ 'tgk-portal-nav__item--active': view === 'grossToNet', 'tgk-portal-nav__item--collapsed': sidebarCollapsed }">
+        <svg class="tgk-portal-nav__icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l3-3 3 3 4-5"/></svg>
+        <span x-show="!sidebarCollapsed" class="tgk-portal-nav__label">Gross-to-Net</span>
+      </button>
+      <button @click="setView('deals')"
+        class="tgk-portal-nav__item"
+        :class="{ 'tgk-portal-nav__item--active': view === 'deals', 'tgk-portal-nav__item--collapsed': sidebarCollapsed }">
+        <svg class="tgk-portal-nav__icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20 12V8H6a2 2 0 01-2-2c0-1.1.9-2 2-2h12v4"/><path d="M4 6v12a2 2 0 002 2h14v-4"/><path d="M18 12a2 2 0 000 4h4v-4z"/></svg>
+        <span x-show="!sidebarCollapsed" class="tgk-portal-nav__label">Deals &amp; Rebates</span>
       </button>
 
       <div x-show="canSeeIamProducts()">
@@ -65,6 +87,34 @@
 
   <!-- Main Content -->
   <main class="tgk-main">
+
+    <!-- HOME / LAUNCHPAD VIEW -->
+    <div x-show="view === 'home'" class="tgk-page-shell tgk-page-shell--scrollable">
+      <div class="tgk-page-stack">
+        <div class="tgk-page-header">
+          <h1 class="tgk-page-title" x-text="t.portalName"></h1>
+        </div>
+
+        <template x-for="group in launchpadGroups" :key="group.section">
+          <div class="tgk-surface-panel tgk-surface-panel--md">
+            <div class="tgk-panel-heading tgk-panel-heading--spaced">
+              <h2 class="tgk-panel-title" x-text="group.section"></h2>
+            </div>
+            <div class="tgk-kpi-grid">
+              <template x-for="tile in group.tiles" :key="tile.key">
+                <button type="button" @click="setView(tile.view)"
+                  class="tgk-kpi" :class="'tgk-tone-border--' + tile.tone"
+                  style="text-align:left;cursor:pointer;border-width:1px;width:100%;font:inherit">
+                  <div class="tgk-kpi__label" x-text="tile.label"></div>
+                  <div class="tgk-kpi__value" x-text="tile.value"></div>
+                  <div class="tgk-kpi__detail" x-text="tile.trend"></div>
+                </button>
+              </template>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
 
     <!-- ORDERS VIEW -->
     <div x-show="view === 'orders'" class="tgk-page-shell">
@@ -102,7 +152,7 @@
               </thead>
               <tbody>
                 <template x-for="order in orders" :key="order.id">
-                  <tr @click="viewVendor(order.vendor)" class="tgk-data-table__row">
+                  <tr @click="viewOrder(order)" class="tgk-data-table__row">
                     <td class="tgk-data-table__cell">
                       <div class="tgk-data-table__identity">
                         <div class="tgk-data-table__name" x-text="order.name"></div>
@@ -291,6 +341,61 @@
                 </template>
               </div>
             </div>
+
+            <div class="tgk-surface-panel tgk-surface-panel--md">
+              <div class="tgk-panel-heading tgk-panel-heading--spaced">
+                <h3 class="tgk-panel-title">Agreements</h3>
+                <span class="tgk-pill tgk-pill--brand">Docusign Navigator</span>
+              </div>
+              <template x-if="navLoading">
+                <div class="tgk-inline-message">Searching Navigator for agreements…</div>
+              </template>
+              <template x-if="!navLoading && navError">
+                <div class="tgk-inline-message" x-text="navError"></div>
+              </template>
+              <template x-if="!navLoading && !navError && navAgreements.length === 0">
+                <div class="tgk-empty-panel tgk-empty-panel--compact">
+                  <div class="tgk-empty-panel__title">No agreements found</div>
+                  <p class="tgk-empty-panel__copy">No Navigator agreements matched this vendor's name.</p>
+                </div>
+              </template>
+              <div class="tgk-record-list" x-show="!navLoading && navAgreements.length > 0">
+                <template x-for="ag in navAgreements" :key="ag.id">
+                  <div class="tgk-record-row">
+                    <div class="tgk-record-row__main">
+                      <div class="tgk-record-row__content">
+                        <div class="tgk-record-row__title" x-text="ag.title"></div>
+                        <div class="tgk-record-row__meta">
+                          <span x-text="ag.type || 'Agreement'"></span>
+                          <template x-if="ag.effectiveDate">
+                            <span class="u-row u-gap-2">
+                              <span class="tgk-record-row__meta-dot"></span>
+                              <span x-text="'Effective ' + ag.effectiveDate"></span>
+                            </span>
+                          </template>
+                          <template x-if="ag.value">
+                            <span class="u-row u-gap-2">
+                              <span class="tgk-record-row__meta-dot"></span>
+                              <span x-text="fmtMoney(ag.value)"></span>
+                            </span>
+                          </template>
+                        </div>
+                      </div>
+                      <div class="tgk-record-row__actions">
+                        <template x-if="ag.sourceEnvelopeId">
+                          <button @click="openAgreementDoc(ag)" class="tgk-icon-button" title="View document">
+                            <svg class="tgk-icon tgk-icon--md" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                          </button>
+                        </template>
+                      </div>
+                    </div>
+                    <template x-if="ag.status">
+                      <span class="tgk-status-badge" :class="statusClasses(ag.status)" x-text="ag.status"></span>
+                    </template>
+                  </div>
+                </template>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -394,8 +499,277 @@
       </div>
     </div>
 
+    <!-- ORDER OBJECT PAGE -->
+    <template x-if="view === 'orderDetail' && selectedOrder">
+      <div class="tgk-page-shell tgk-page-shell--scrollable">
+        <button @click="backToOrders()" class="tgk-back-link">
+          <svg class="tgk-icon tgk-icon--sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg>
+          Back to Orders
+        </button>
+
+        <div class="tgk-page-stack">
+          <div class="tgk-page-header">
+            <h1 class="tgk-page-title" x-text="selectedOrder.name"></h1>
+            <span class="tgk-status-badge" :class="statusClasses(selectedOrder.status)" x-text="selectedOrder.status"></span>
+          </div>
+
+          <!-- Header facets -->
+          <div class="tgk-kpi-grid">
+            <section class="tgk-kpi tgk-tone-border--sky">
+              <div class="tgk-kpi__label" x-text="t.clientRole"></div>
+              <div class="tgk-kpi__value" x-text="selectedOrder.vendorName"></div>
+            </section>
+            <section class="tgk-kpi tgk-tone-border--emerald">
+              <div class="tgk-kpi__label">Company Code</div>
+              <div class="tgk-kpi__value" x-text="orderFacets.companyCode"></div>
+            </section>
+            <section class="tgk-kpi tgk-tone-border--amber">
+              <div class="tgk-kpi__label">Plant</div>
+              <div class="tgk-kpi__value" x-text="orderFacets.plant"></div>
+            </section>
+            <section class="tgk-kpi tgk-tone-border--red">
+              <div class="tgk-kpi__label">Total Net</div>
+              <div class="tgk-kpi__value" x-text="fmtMoney(selectedOrderNet)"></div>
+            </section>
+          </div>
+
+          <!-- Line items -->
+          <div class="tgk-surface-panel tgk-surface-panel--md">
+            <div class="tgk-panel-heading tgk-panel-heading--spaced">
+              <h2 class="tgk-panel-title">Line Items</h2>
+              <span class="tgk-data-table__meta" x-text="orderFacets.currency"></span>
+            </div>
+            <div class="tgk-data-table-shell">
+              <table class="tgk-data-table">
+                <thead>
+                  <tr class="tgk-data-table__head-row">
+                    <th class="tgk-data-table__heading">Item</th>
+                    <th class="tgk-data-table__heading">Material</th>
+                    <th class="tgk-data-table__heading">Description</th>
+                    <th class="tgk-data-table__heading">Qty</th>
+                    <th class="tgk-data-table__heading">UoM</th>
+                    <th class="tgk-data-table__heading">Unit Price</th>
+                    <th class="tgk-data-table__heading">Net Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-for="li in selectedOrderLineItems" :key="li.item">
+                    <tr class="tgk-data-table__row">
+                      <td class="tgk-data-table__cell" x-text="li.item"></td>
+                      <td class="tgk-data-table__cell" x-text="li.material"></td>
+                      <td class="tgk-data-table__cell" x-text="li.description"></td>
+                      <td class="tgk-data-table__cell tgk-data-table__cell--numeric" x-text="li.qty.toLocaleString()"></td>
+                      <td class="tgk-data-table__cell" x-text="li.uom"></td>
+                      <td class="tgk-data-table__cell tgk-data-table__cell--numeric" x-text="fmtMoney(li.unitPrice)"></td>
+                      <td class="tgk-data-table__cell tgk-data-table__cell--numeric" x-text="fmtMoney(lineNetAmount(li))"></td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+            <template x-if="selectedOrderLineItems.length === 0">
+              <div class="tgk-empty-panel tgk-empty-panel--compact">
+                <div class="tgk-empty-panel__title">No line items</div>
+                <p class="tgk-empty-panel__copy">Line items for this order will appear here.</p>
+              </div>
+            </template>
+          </div>
+
+          <!-- Linked documents -->
+          <div class="tgk-surface-panel tgk-surface-panel--md">
+            <div class="tgk-panel-heading tgk-panel-heading--spaced">
+              <h3 class="tgk-panel-title">Linked Documents</h3>
+              <span class="tgk-pill tgk-pill--brand">Docusign</span>
+            </div>
+            <template x-if="selectedOrderLinkedDocs.length === 0">
+              <div class="tgk-empty-panel tgk-empty-panel--compact">
+                <div class="tgk-empty-panel__title">No linked documents</div>
+                <p class="tgk-empty-panel__copy">Agreements and invoices for this order will appear here.</p>
+              </div>
+            </template>
+            <div class="tgk-record-list" x-show="selectedOrderLinkedDocs.length > 0">
+              <template x-for="doc in selectedOrderLinkedDocs" :key="doc.name">
+                <div class="tgk-record-row">
+                  <div class="tgk-record-row__main">
+                    <div class="tgk-record-row__content">
+                      <div class="tgk-record-row__title" x-text="doc.name"></div>
+                      <div class="tgk-record-row__meta">
+                        <span x-text="doc.type"></span>
+                      </div>
+                    </div>
+                  </div>
+                  <span class="tgk-status-badge" :class="statusClasses(doc.status)" x-text="doc.status"></span>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- GROSS-TO-NET VIEW -->
+    <div x-show="view === 'grossToNet'" class="tgk-page-shell tgk-page-shell--scrollable">
+      <div class="tgk-page-stack">
+        <div class="tgk-page-header">
+          <h1 class="tgk-page-title">Gross-to-Net</h1>
+          <span class="tgk-data-table__meta" x-text="grossToNetPeriod"></span>
+        </div>
+
+        <div class="tgk-kpi-grid">
+          <section class="tgk-kpi tgk-tone-border--sky">
+            <div class="tgk-kpi__label">Gross Sales</div>
+            <div class="tgk-kpi__value" x-text="fmtMoney(grossToNetGross)"></div>
+          </section>
+          <section class="tgk-kpi tgk-tone-border--emerald">
+            <div class="tgk-kpi__label">Net Sales</div>
+            <div class="tgk-kpi__value" x-text="fmtMoney(grossToNetNet)"></div>
+          </section>
+          <section class="tgk-kpi tgk-tone-border--amber">
+            <div class="tgk-kpi__label">Gross-to-Net %</div>
+            <div class="tgk-kpi__value" x-text="fmtRatioPct(grossToNetPct)"></div>
+          </section>
+        </div>
+
+        <div class="tgk-surface-panel tgk-surface-panel--md">
+          <div class="tgk-panel-heading tgk-panel-heading--spaced">
+            <h2 class="tgk-panel-title">Gross-to-Net Bridge</h2>
+          </div>
+          <div class="tgk-waterfall">
+            <template x-for="row in grossToNetRows" :key="row.key">
+              <div class="tgk-waterfall__row">
+                <div class="tgk-waterfall__label" x-text="row.label"></div>
+                <div class="tgk-waterfall__track">
+                  <div class="tgk-waterfall__bar"
+                    :class="row.kind === 'deduction' ? 'tgk-waterfall__bar--deduction' : (row.kind === 'net' ? 'tgk-waterfall__bar--net' : 'tgk-waterfall__bar--base')"
+                    :style="`width:${row.pct}%`"></div>
+                </div>
+                <div class="tgk-waterfall__amount" :class="row.kind === 'deduction' ? 'tgk-waterfall__amount--neg' : ''"
+                  x-text="(row.kind === 'deduction' ? '−' : '') + fmtMoney(Math.abs(row.amount))"></div>
+                <div class="tgk-waterfall__running" x-text="fmtMoney(row.running)"></div>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DEALS & REBATES VIEW -->
+    <div x-show="view === 'deals'" class="tgk-page-shell tgk-page-shell--scrollable">
+      <div class="tgk-page-stack">
+        <div class="tgk-page-header">
+          <h1 class="tgk-page-title">Deals &amp; Rebates</h1>
+        </div>
+
+        <!-- Deals -->
+        <template x-for="deal in deals" :key="deal.id">
+          <div class="tgk-surface-panel tgk-surface-panel--md">
+            <div class="tgk-panel-heading tgk-panel-heading--spaced">
+              <div class="tgk-data-table__identity">
+                <div class="tgk-data-table__name" x-text="deal.customer"></div>
+                <div class="tgk-data-table__meta">
+                  <span x-text="deal.id"></span> · <span x-text="fmtMoney(deal.value)"></span>
+                </div>
+              </div>
+              <div class="u-row u-gap-2">
+                <span class="tgk-pill tgk-pill--brand" x-text="'Deal score ' + deal.score"></span>
+                <span class="tgk-status-badge" :class="statusClasses(deal.status)" x-text="deal.status"></span>
+              </div>
+            </div>
+
+            <div class="tgk-data-table-shell">
+              <table class="tgk-data-table">
+                <thead>
+                  <tr class="tgk-data-table__head-row">
+                    <th class="tgk-data-table__heading">SKU</th>
+                    <th class="tgk-data-table__heading">List Price</th>
+                    <th class="tgk-data-table__heading">Qty</th>
+                    <th class="tgk-data-table__heading">Disc %</th>
+                    <th class="tgk-data-table__heading">Net Unit</th>
+                    <th class="tgk-data-table__heading">Margin %</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-for="li in deal.lineItems" :key="li.sku">
+                    <tr class="tgk-data-table__row">
+                      <td class="tgk-data-table__cell" x-text="li.sku"></td>
+                      <td class="tgk-data-table__cell tgk-data-table__cell--numeric" x-text="fmtMoney(li.list)"></td>
+                      <td class="tgk-data-table__cell tgk-data-table__cell--numeric" x-text="li.qty.toLocaleString()"></td>
+                      <td class="tgk-data-table__cell tgk-data-table__cell--numeric" x-text="li.discountPct + '%'"></td>
+                      <td class="tgk-data-table__cell tgk-data-table__cell--numeric" x-text="fmtMoney(dealNetUnit(li))"></td>
+                      <td class="tgk-data-table__cell tgk-data-table__cell--numeric" x-text="li.marginPct + '%'"></td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="tgk-panel-heading tgk-panel-heading--spaced">
+              <h3 class="tgk-panel-title">Approval Chain</h3>
+            </div>
+            <div class="tgk-record-list">
+              <template x-for="step in deal.approvals" :key="step.step">
+                <div class="tgk-record-row">
+                  <div class="tgk-record-row__main">
+                    <div class="tgk-record-row__content">
+                      <div class="tgk-record-row__title" x-text="step.step"></div>
+                    </div>
+                  </div>
+                  <span class="tgk-status-badge" :class="statusClasses(step.status)" x-text="step.status"></span>
+                </div>
+              </template>
+            </div>
+          </div>
+        </template>
+
+        <!-- Rebate programs -->
+        <div class="tgk-surface-panel tgk-surface-panel--md">
+          <div class="tgk-panel-heading tgk-panel-heading--spaced">
+            <h2 class="tgk-panel-title">Rebate Programs</h2>
+          </div>
+          <div class="tgk-data-table-shell">
+            <table class="tgk-data-table">
+              <thead>
+                <tr class="tgk-data-table__head-row">
+                  <th class="tgk-data-table__heading">Program</th>
+                  <th class="tgk-data-table__heading">Partner</th>
+                  <th class="tgk-data-table__heading">Type</th>
+                  <th class="tgk-data-table__heading">Attainment</th>
+                  <th class="tgk-data-table__heading">Accrued</th>
+                  <th class="tgk-data-table__heading">Paid</th>
+                  <th class="tgk-data-table__heading">Outstanding</th>
+                  <th class="tgk-data-table__heading">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="prog in rebatePrograms" :key="prog.id">
+                  <tr class="tgk-data-table__row">
+                    <td class="tgk-data-table__cell" x-text="prog.id"></td>
+                    <td class="tgk-data-table__cell" x-text="prog.partner"></td>
+                    <td class="tgk-data-table__cell" x-text="prog.type"></td>
+                    <td class="tgk-data-table__cell tgk-data-table__cell--numeric" x-text="fmtRatioPct(rebateAttainment(prog))"></td>
+                    <td class="tgk-data-table__cell tgk-data-table__cell--numeric" x-text="fmtMoney(prog.accrued)"></td>
+                    <td class="tgk-data-table__cell tgk-data-table__cell--numeric" x-text="fmtMoney(prog.paid)"></td>
+                    <td class="tgk-data-table__cell tgk-data-table__cell--numeric" x-text="fmtMoney(rebateOutstanding(prog))"></td>
+                    <td class="tgk-data-table__cell">
+                      <span class="tgk-status-badge" :class="statusClasses(prog.status)" x-text="prog.status"></span>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- MONITOR VIEW -->
     <div x-show="view === 'monitor'" class="tgk-page-shell u-scroll-y" data-partial="../shared/partials/monitor-view.html"></div>
+
+    <!-- NAVIGATOR VIEW -->
+    <div x-show="view === 'navigator'" class="tgk-page-shell u-scroll-y" data-partial="../shared/partials/navigator-view.html"></div>
+
+    <!-- WEB FORMS VIEW -->
+    <div x-show="view === 'web-forms'" class="tgk-page-shell u-scroll-y" data-partial="../shared/partials/web-forms-view.html"></div>
 
     <!-- IAM PRODUCT PLACEHOLDER -->
     <div x-show="getCurrentIamPlaceholder()" class="tgk-page-shell" data-partial="../shared/partials/iam-placeholder-view.html"></div>
@@ -419,7 +793,7 @@
                   Open in New Tab
                 </a>
               </template>
-              <button @click="closeErpSend()" class="tgk-modal-close">&times;</button>
+              <button @click="closeErpSend()" class="tgk-modal-close" aria-label="Close"><svg class="tgk-icon tgk-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
             </div>
           </div>
 
@@ -438,7 +812,10 @@
                   <div class="tgk-workflow-step-list">
                     <template x-for="(step, index) in erpSendSteps" :key="step">
                       <div class="tgk-workflow-step" :class="{ 'tgk-workflow-step--active': index <= erpSendStepIndex }">
-                        <span class="tgk-workflow-step__index" :class="{ 'tgk-workflow-step__index--active': index <= erpSendStepIndex }" x-text="index < erpSendStepIndex ? '✓' : index + 1"></span>
+                        <span class="tgk-workflow-step__index" :class="{ 'tgk-workflow-step__index--active': index <= erpSendStepIndex }">
+                          <svg x-show="index < erpSendStepIndex" class="tgk-icon tgk-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg>
+                          <span x-show="index >= erpSendStepIndex" x-text="index + 1"></span>
+                        </span>
                         <span class="tgk-workflow-step__label" :class="{ 'tgk-workflow-step__label--active': index <= erpSendStepIndex }" x-text="step"></span>
                       </div>
                     </template>
