@@ -5,5 +5,9 @@ backend/.env
 .local/
 backend/data/*.db*
 extensions/maestro-tgk/.env
-context/
-docs/
+
+# Local scratch / working notes (kept on disk, not tracked)
+_context/
+_docs/
+_PROJECT.md
+prompts/
