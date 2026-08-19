@@ -51,6 +51,23 @@ function normalizeOptionalPhone(value) {
   return normalizeOptionalString(value);
 }
 
+function normalizeOptionalNumber(value) {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (value === null || value === '') {
+    return null;
+  }
+
+  const normalized = Number(value);
+  if (!Number.isFinite(normalized)) {
+    throw createError(400, 'Invalid numeric value');
+  }
+
+  return normalized;
+}
+
 function mergeData(existingData, nextData) {
   if (nextData === undefined) {
     return undefined;
@@ -223,6 +240,54 @@ function normalizeTaskWrite({ db, appSlug, existingRecord, input = {} }) {
   };
 }
 
+function normalizeQuoteWrite({ db, appSlug, existingRecord, input = {} }) {
+  const isCreate = !existingRecord;
+
+  return {
+    id: input.id || existingRecord?.id || randomUUID(),
+    customer_id: input.customerId !== undefined
+      ? resolveReference(db, appSlug, input.customerId, 'customers', 'customerId')
+      : undefined,
+    quote_number: input.quoteNumber !== undefined ? normalizeOptionalString(input.quoteNumber) : undefined,
+    name: input.name !== undefined ? normalizeOptionalString(input.name) : undefined,
+    status: input.status !== undefined
+      ? normalizeOptionalString(input.status)
+      : (isCreate ? 'draft' : undefined),
+    total: input.total !== undefined ? normalizeOptionalNumber(input.total) : undefined,
+    data: mergeData(existingRecord?.data, input.data),
+    created_at: input.createdAt !== undefined ? normalizeOptionalDate(input.createdAt) : undefined
+  };
+}
+
+function normalizeQuoteLineItemWrite({ db, appSlug, existingRecord, input = {} }) {
+  const isCreate = !existingRecord;
+  const requestedQuoteId = input.quoteId !== undefined
+    ? input.quoteId
+    : existingRecord?.quote_id;
+
+  return {
+    id: input.id || existingRecord?.id || randomUUID(),
+    quote_id: input.quoteId !== undefined || isCreate
+      ? resolveReference(
+        db,
+        appSlug,
+        normalizeRequiredText(requestedQuoteId, 'quoteId'),
+        'quotes',
+        'quoteId'
+      )
+      : undefined,
+    name: input.name !== undefined ? normalizeOptionalString(input.name) : undefined,
+    description: input.description !== undefined ? normalizeOptionalString(input.description) : undefined,
+    quantity: input.quantity !== undefined
+      ? normalizeOptionalNumber(input.quantity)
+      : (isCreate ? 1 : undefined),
+    unit_price: input.unitPrice !== undefined ? normalizeOptionalNumber(input.unitPrice) : undefined,
+    total: input.total !== undefined ? normalizeOptionalNumber(input.total) : undefined,
+    data: mergeData(existingRecord?.data, input.data),
+    created_at: input.createdAt !== undefined ? normalizeOptionalDate(input.createdAt) : undefined
+  };
+}
+
 const RESOURCE_DEFINITIONS = {
   employees: {
     table: 'employees',
@@ -259,6 +324,7 @@ const RESOURCE_DEFINITIONS = {
     beforeDelete(db, appSlug, recordId) {
       db.prepare('UPDATE transactions SET customer_id = NULL, updated_at = CURRENT_TIMESTAMP WHERE app_slug = ? AND customer_id = ?').run(appSlug, recordId);
       db.prepare('UPDATE tasks SET customer_id = NULL, updated_at = CURRENT_TIMESTAMP WHERE app_slug = ? AND customer_id = ?').run(appSlug, recordId);
+      db.prepare('UPDATE quotes SET customer_id = NULL, updated_at = CURRENT_TIMESTAMP WHERE app_slug = ? AND customer_id = ?').run(appSlug, recordId);
     }
   },
   transactions: {
@@ -299,6 +365,42 @@ const RESOURCE_DEFINITIONS = {
     },
     normalizeWrite: normalizeTaskWrite,
     allowDelete: true
+  },
+  quotes: {
+    table: 'quotes',
+    label: 'Quote',
+    columns: ['customer_id', 'quote_number', 'name', 'status', 'total', 'data'],
+    orderBy: 'created_at DESC',
+    buildListOptions(filters = {}) {
+      return combineListOptions(
+        buildEqualityFilters(filters, {
+          id: 'id',
+          customerId: 'customer_id',
+          quoteNumber: 'quote_number',
+          status: 'status'
+        }),
+        buildTextSearch(['quote_number', 'name', 'id'], filters.search)
+      );
+    },
+    normalizeWrite: normalizeQuoteWrite,
+    allowDelete: true
+  },
+  'quote-line-items': {
+    table: 'quote_line_items',
+    label: 'Quote line item',
+    columns: ['quote_id', 'name', 'description', 'quantity', 'unit_price', 'total', 'data'],
+    orderBy: 'created_at ASC',
+    buildListOptions(filters = {}) {
+      return combineListOptions(
+        buildEqualityFilters(filters, {
+          id: 'id',
+          quoteId: 'quote_id'
+        }),
+        buildTextSearch(['name', 'description', 'id'], filters.search)
+      );
+    },
+    normalizeWrite: normalizeQuoteLineItemWrite,
+    allowDelete: true
   }
 };
 
@@ -327,34 +429,52 @@ function attachCustomerIncludes(db, appSlug, recordId, record, query = {}) {
   return record;
 }
 
+function attachQuoteIncludes(db, appSlug, recordId, record, query = {}) {
+  if (isTruthyQueryValue(query.includeLineItems)) {
+    record.lineItems = listRecordsForApp(db, appSlug, 'quote-line-items', { quoteId: recordId });
+  }
+
+  return record;
+}
+
+function attachRecordIncludes(db, appSlug, resourceKey, record, query = {}) {
+  if (resourceKey === 'customers') {
+    return attachCustomerIncludes(db, appSlug, record.id, record, query);
+  }
+
+  if (resourceKey === 'quotes') {
+    return attachQuoteIncludes(db, appSlug, record.id, record, query);
+  }
+
+  return record;
+}
+
 function listRecordsForApp(db, appSlug, resourceKey, filters) {
   const resource = getResourceDefinition(resourceKey);
   const listOptions = resource.buildListOptions(filters);
-  return serializeRecords(store.listRecords(db, resource, appSlug, {
+  const records = serializeRecords(store.listRecords(db, resource, appSlug, {
     ...listOptions,
     orderBy: resource.orderBy
   }));
+  return records.map((record) => attachRecordIncludes(db, appSlug, resourceKey, record, filters));
 }
 
 function getRecordForApp(db, appSlug, resourceKey, recordId, query) {
   const resource = getResourceDefinition(resourceKey);
   const record = serializeRecord(store.requireRecord(db, resource.table, appSlug, recordId, resource.label));
 
-  if (resourceKey === 'customers') {
-    return attachCustomerIncludes(db, appSlug, recordId, record, query);
-  }
-
-  return record;
+  return attachRecordIncludes(db, appSlug, resourceKey, record, query);
 }
 
-function getRecordById(db, resourceKey, recordId) {
+function getRecordById(db, resourceKey, recordId, query) {
   const resource = getResourceDefinition(resourceKey);
   const record = store.getRecordById(db, resource.table, recordId);
   if (!record) {
     throw createError(404, `${resource.label} not found`);
   }
 
-  return serializeRecord(record);
+  const serialized = serializeRecord(record);
+  return attachRecordIncludes(db, serialized.appSlug, resourceKey, serialized, query);
 }
 
 function createRecordForApp(db, appSlug, resourceKey, input = {}) {

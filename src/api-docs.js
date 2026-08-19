@@ -57,6 +57,8 @@ const API_ROUTES = [
   ...resourceRoutes('customers', { canDelete: true }),
   ...resourceRoutes('transactions', { canDelete: true }),
   ...resourceRoutes('tasks', { canDelete: true }),
+  ...resourceRoutes('quotes', { canDelete: true }),
+  ...resourceRoutes('quote-line-items', { canDelete: true }),
   {
     method: 'GET',
     path: '/maestro',

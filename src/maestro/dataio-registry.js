@@ -3,16 +3,22 @@ const customerService = require('./customer-service');
 const employeeService = require('./employee-service');
 const transactionService = require('./transaction-service');
 const taskService = require('./task-service');
+const quoteService = require('./quote-service');
+const quoteLineItemService = require('./quote-line-item-service');
 const customerTypeDefs = require('./customer-type-definitions');
 const employeeTypeDefs = require('./employee-type-definitions');
 const transactionTypeDefs = require('./transaction-type-definitions');
 const taskTypeDefs = require('./task-type-definitions');
+const quoteTypeDefs = require('./quote-type-definitions');
+const quoteLineItemTypeDefs = require('./quote-line-item-type-definitions');
 
 const REGISTRY = [
   { service: customerService, typeDefs: customerTypeDefs },
   { service: employeeService, typeDefs: employeeTypeDefs },
   { service: taskService, typeDefs: taskTypeDefs },
-  { service: transactionService, typeDefs: transactionTypeDefs }
+  { service: transactionService, typeDefs: transactionTypeDefs },
+  { service: quoteLineItemService, typeDefs: quoteLineItemTypeDefs },
+  { service: quoteService, typeDefs: quoteTypeDefs }
 ];
 
 function findRegistration(typeName) {
@@ -50,16 +56,30 @@ function getTypeNames() {
 }
 
 function getTypeDefinitions(requestedTypeNames = []) {
-  if (!Array.isArray(requestedTypeNames) || requestedTypeNames.length === 0) {
-    return {
-      declarations: REGISTRY.flatMap(({ typeDefs }) => typeDefs.TYPE_DEFINITIONS.declarations),
-      errors: []
-    };
-  }
-
   const declarations = [];
   const errors = [];
   const seen = new Set();
+
+  function appendRegistration(registration) {
+    if (!registration || seen.has(registration.typeDefs.TYPE_NAME)) {
+      return;
+    }
+
+    for (const dependencyTypeName of registration.typeDefs.DEPENDENCY_TYPE_NAMES || []) {
+      appendRegistration(findRegistration(dependencyTypeName));
+    }
+
+    declarations.push(...registration.typeDefs.TYPE_DEFINITIONS.declarations);
+    seen.add(registration.typeDefs.TYPE_NAME);
+  }
+
+  if (!Array.isArray(requestedTypeNames) || requestedTypeNames.length === 0) {
+    REGISTRY.forEach(appendRegistration);
+    return {
+      declarations,
+      errors
+    };
+  }
 
   for (const requestedTypeName of requestedTypeNames) {
     const registration = findRegistration(requestedTypeName);
@@ -72,12 +92,7 @@ function getTypeDefinitions(requestedTypeNames = []) {
       continue;
     }
 
-    if (seen.has(registration.typeDefs.TYPE_NAME)) {
-      continue;
-    }
-
-    declarations.push(...registration.typeDefs.TYPE_DEFINITIONS.declarations);
-    seen.add(registration.typeDefs.TYPE_NAME);
+    appendRegistration(registration);
   }
 
   return { declarations, errors };

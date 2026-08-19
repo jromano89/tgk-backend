@@ -41,13 +41,13 @@ function createResourceAccess(resourceKey) {
       const resolvedAppSlug = requireAppSlug(appSlug);
       return resourceService.createRecordForApp(db, resolvedAppSlug, resourceKey, payload);
     },
-    get(appSlug, recordId) {
+    get(appSlug, recordId, query) {
       const db = getDb();
       if (appSlug) {
-        return resourceService.getRecordForApp(db, requireAppSlug(appSlug), resourceKey, recordId);
+        return resourceService.getRecordForApp(db, requireAppSlug(appSlug), resourceKey, recordId, query);
       }
 
-      return resourceService.getRecordById(db, resourceKey, recordId);
+      return resourceService.getRecordById(db, resourceKey, recordId, query);
     },
     list(appSlug, filters) {
       const db = getDb();
@@ -67,7 +67,9 @@ setResourceAccess({
   customers: createResourceAccess('customers'),
   employees: createResourceAccess('employees'),
   transactions: createResourceAccess('transactions'),
-  tasks: createResourceAccess('tasks')
+  tasks: createResourceAccess('tasks'),
+  quotes: createResourceAccess('quotes'),
+  quoteLineItems: createResourceAccess('quote-line-items')
 });
 
 function createErrorResponse(error) {

@@ -33,41 +33,50 @@ function crudDecorator(readableOnly) {
 }
 
 function createPropertyDeclaration(field) {
-  return {
-    $class: PROPERTY_CLASS_MAP[field.type] || PROPERTY_CLASS_MAP.String,
+  const property = {
+    $class: field.objectType ? mm('ObjectProperty') : (PROPERTY_CLASS_MAP[field.type] || PROPERTY_CLASS_MAP.String),
     name: field.name,
-    isArray: false,
+    isArray: !!field.isArray,
     isOptional: !!field.optional,
     decorators: [
       createDecorator('Term', field.label),
       crudDecorator(field.readableOnly)
     ]
   };
+
+  if (field.objectType) {
+    property.type = field.objectType;
+  }
+
+  return property;
+}
+
+function createConceptDeclaration({ typeName, term, identifiedBy, fields }) {
+  return {
+    $class: mm('ConceptDeclaration'),
+    name: typeName,
+    isAbstract: false,
+    identified: {
+      $class: mm('IdentifiedBy'),
+      name: identifiedBy
+    },
+    decorators: [
+      createDecorator('Term', term),
+      crudDecorator(false)
+    ],
+    properties: fields.map(createPropertyDeclaration)
+  };
 }
 
 function createConceptTypeDefinitions({ typeName, term, identifiedBy, fields }) {
   return {
-    declarations: [
-      {
-        $class: mm('ConceptDeclaration'),
-        name: typeName,
-        isAbstract: false,
-        identified: {
-          $class: mm('IdentifiedBy'),
-          name: identifiedBy
-        },
-        decorators: [
-          createDecorator('Term', term),
-          crudDecorator(false)
-        ],
-        properties: fields.map(createPropertyDeclaration)
-      }
-    ]
+    declarations: [createConceptDeclaration({ typeName, term, identifiedBy, fields })]
   };
 }
 
 module.exports = {
   METAMODEL,
+  createConceptDeclaration,
   createConceptTypeDefinitions,
   mm,
   PROPERTY_CLASS_MAP,

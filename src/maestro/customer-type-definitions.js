@@ -21,6 +21,8 @@ const FIELD_DEFINITIONS = [
   { name: 'Organization', label: 'Organization', type: 'String', optional: true },
   { name: 'Status', label: 'Status', type: 'String', optional: true },
   { name: 'DataJson', label: 'Data JSON', type: 'String', optional: true },
+  { name: 'Tasks', label: 'Tasks', objectType: 'Task', isArray: true, optional: true, readableOnly: true },
+  { name: 'Transactions', label: 'Transactions', objectType: 'Transaction', isArray: true, optional: true, readableOnly: true },
   { name: 'CreatedAt', label: 'Created At', type: 'DateTime', optional: true, readableOnly: true },
   { name: 'UpdatedAt', label: 'Updated At', type: 'DateTime', optional: true, readableOnly: true }
 ];
@@ -33,6 +35,7 @@ const TYPE_DEFINITIONS = createConceptTypeDefinitions({
 });
 
 module.exports = {
+  DEPENDENCY_TYPE_NAMES: ['Task', 'Transaction'],
   TYPE_ALIASES,
   TYPE_DEFINITIONS,
   TYPE_NAMES,

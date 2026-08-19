@@ -100,6 +100,25 @@ function readOptionalDataField(input, aliases) {
   return parseDataValue(pickFirstDefined(input, aliases));
 }
 
+function readOptionalNumberField(input, aliases) {
+  if (!hasOwnField(input, aliases)) {
+    return undefined;
+  }
+
+  const alias = aliases.find((key) => Object.prototype.hasOwnProperty.call(input, key));
+  const value = input[alias];
+  if (value === null || value === '') {
+    return null;
+  }
+
+  const normalized = Number(value);
+  if (!Number.isFinite(normalized)) {
+    throw createServiceError(400, 'BAD_REQUEST', `${aliases[0]} must be a number.`);
+  }
+
+  return normalized;
+}
+
 function serializeData(value) {
   return JSON.stringify(asObject(value));
 }
@@ -191,7 +210,8 @@ function normalizeReferenceWriteError(error, resourceLabel) {
 
   const REFERENCE_MESSAGES = {
     'customerId must belong to the current app': `${resourceLabel} CustomerId must be the TGK customer Id for this app.`,
-    'employeeId must belong to the current app': `${resourceLabel} EmployeeId must be the TGK employee Id for this app.`
+    'employeeId must belong to the current app': `${resourceLabel} EmployeeId must be the TGK employee Id for this app.`,
+    'quoteId must belong to the current app': `${resourceLabel} QuoteId must be the TGK quote Id for this app.`
   };
 
   const mapped = REFERENCE_MESSAGES[error.message];
@@ -212,6 +232,7 @@ module.exports = {
   pickFirstDefined,
   requireAppSlug,
   readOptionalDataField,
+  readOptionalNumberField,
   readRecordValue,
   readOptionalTextField,
   resolveRequestAppSlug,

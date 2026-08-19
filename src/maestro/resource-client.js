@@ -21,8 +21,8 @@ function createResourceClient(resourceName) {
     get(appSlug, id) {
       return requireResource(resourceName).get(appSlug, id);
     },
-    getById(id) {
-      return requireResource(resourceName).get(null, id);
+    getById(id, query) {
+      return requireResource(resourceName).get(null, id, query);
     },
     list(appSlug, query) {
       return requireResource(resourceName).list(appSlug, query);

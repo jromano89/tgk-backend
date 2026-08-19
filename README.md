@@ -6,6 +6,8 @@ This service owns Docusign auth helpers, API proxying, app-scoped demo data, Ser
 
 ## Local Development
 
+Use Node.js 22 (see `.node-version`).
+
 ```bash
 cp .env.example .env
 npm install
@@ -68,11 +70,13 @@ Key endpoints:
 - `POST /api/auth/token`: mints a Docusign access token using backend credentials
 - `GET|POST|PUT|DELETE /api/proxy?url=<encoded-url>`: Docusign API proxy
 - `GET /api/data/events?app=tgk-wealth`: app-scoped SSE stream
-- `/api/data/employees`, `/api/data/customers`, `/api/data/transactions`, `/api/data/tasks`: app-scoped demo data APIs
+- `/api/data/employees`, `/api/data/customers`, `/api/data/transactions`, `/api/data/tasks`, `/api/data/quotes`, `/api/data/quote-line-items`: app-scoped demo data APIs
 - `/maestro/api/dataio/:action`: Maestro Data IO bridge
 - `GET /maestro/manifest/clientCredentials.ReadWriteManifest.json`: generated Maestro manifest
 
 For `/api/data/*`, pass the app slug as `?app=tgk-wealth` or `X-Demo-App: tgk-wealth`.
+
+Quote line items belong to a quote through `quoteId`. Add `includeLineItems=true` when reading a quote to include its related line items. Customer reads similarly support `includeTasks=true` and `includeTransactions=true`.
 
 The Docusign app redirect URI should point at the hosted backend callback:
 

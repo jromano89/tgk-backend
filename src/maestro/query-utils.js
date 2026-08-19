@@ -107,6 +107,11 @@ function filterAttributes(record, attributesToSelect) {
   return filtered;
 }
 
+function isAttributeSelected(query, attributeName) {
+  const attributes = query?.attributesToSelect;
+  return !Array.isArray(attributes) || attributes.length === 0 || attributes.includes(attributeName);
+}
+
 function resolveOperand(record, operand) {
   if (!operand) {
     return undefined;
@@ -183,6 +188,7 @@ module.exports = {
   filterAttributes,
   getQueryOperation,
   getLiteralComparisonValue,
+  isAttributeSelected,
   normalizeSearchRequest,
   normalizePagination
 };

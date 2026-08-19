@@ -101,9 +101,10 @@ function createDataIoService({
     const appSlug = resolveSearchAppSlug(body, query);
     const operation = getQueryOperation(query);
     const exactRecordId = getExactRecordId(operation, searchIdFields);
+    const searchFilters = buildSearchFilters ? buildSearchFilters(query) : undefined;
     const records = appSlug
-      ? await listRecords(appSlug, buildSearchFilters ? buildSearchFilters(query) : undefined)
-      : await loadRecordsById(exactRecordId);
+      ? await listRecords(appSlug, searchFilters)
+      : await loadRecordsById(exactRecordId, searchFilters);
     return {
       records: records
         .map(mapRecordToDataRecord)
@@ -119,13 +120,13 @@ function createDataIoService({
     };
   }
 
-  async function loadRecordsById(recordId) {
+  async function loadRecordsById(recordId, searchOptions) {
     if (!recordId || !loadExistingRecordById) {
       throw createServiceError(400, 'BAD_REQUEST', 'searchRecords requires AppSlug unless the query matches an exact record id.');
     }
 
     try {
-      const record = await loadExistingRecordById(recordId);
+      const record = await loadExistingRecordById(recordId, searchOptions);
       return record ? [record] : [];
     } catch (error) {
       if (error?.statusCode === 404) {
