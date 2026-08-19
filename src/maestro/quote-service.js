@@ -1,7 +1,6 @@
 const { createResourceClient } = require('./resource-client');
 const { createDataIoService } = require('./dataio-service');
 const { TYPE_ALIASES, TYPE_NAME } = require('./quote-type-definitions');
-const quoteLineItemService = require('./quote-line-item-service');
 const { getLiteralComparisonValue, getQueryOperation, isAttributeSelected } = require('./query-utils');
 const {
   asObject,
@@ -45,9 +44,7 @@ function mapQuoteToDataRecord(quote) {
     Status: quote.status || '',
     Total: quote.total ?? null,
     DataJson: serializeData(asObject(quote.data)),
-    LineItems: Array.isArray(quote.lineItems)
-      ? quote.lineItems.map(quoteLineItemService.mapRecordToDataRecord)
-      : [],
+    LineItems: Array.isArray(quote.lineItems) ? quote.lineItems.map((lineItem) => lineItem.id) : [],
     CreatedAt: readRecordValue(quote, 'createdAt', 'created_at') || '',
     UpdatedAt: readRecordValue(quote, 'updatedAt', 'updated_at') || ''
   };

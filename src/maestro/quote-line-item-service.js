@@ -61,7 +61,7 @@ function buildQuoteLineItemSearchFilters(query) {
   return Object.fromEntries(Object.entries(filters).filter(([, value]) => value !== null && value !== undefined && value !== ''));
 }
 
-const service = createDataIoService({
+module.exports = createDataIoService({
   typeName: TYPE_NAME,
   typeAliases: TYPE_ALIASES,
   createBackendRecord: client.create,
@@ -73,7 +73,3 @@ const service = createDataIoService({
   mapRecordToDataRecord: mapQuoteLineItemToDataRecord,
   normalizeWriteError: (error) => normalizeReferenceWriteError(error, 'Quote line item')
 });
-
-service.mapRecordToDataRecord = mapQuoteLineItemToDataRecord;
-
-module.exports = service;

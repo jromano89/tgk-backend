@@ -20,7 +20,7 @@ const FIELD_DEFINITIONS = [
   { name: 'Status', label: 'Status', type: 'String', optional: true },
   { name: 'Total', label: 'Total', type: 'Double', optional: true },
   { name: 'DataJson', label: 'Data JSON', type: 'String', optional: true },
-  { name: 'LineItems', label: 'Line Items', objectType: 'QuoteLineItem', isArray: true, optional: true, readableOnly: true },
+  { name: 'LineItems', label: 'Line Items', relationshipType: 'QuoteLineItem', isArray: true, optional: true, readableOnly: true },
   { name: 'CreatedAt', label: 'Created At', type: 'DateTime', optional: true, readableOnly: true },
   { name: 'UpdatedAt', label: 'Updated At', type: 'DateTime', optional: true, readableOnly: true }
 ];

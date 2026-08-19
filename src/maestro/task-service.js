@@ -62,7 +62,7 @@ function buildTaskSearchFilters(query) {
   return Object.fromEntries(Object.entries(filters).filter(([, value]) => value !== null && value !== undefined && value !== ''));
 }
 
-const service = createDataIoService({
+module.exports = createDataIoService({
   typeName: TYPE_NAME,
   typeAliases: TYPE_ALIASES,
   createBackendRecord: client.create,
@@ -75,7 +75,3 @@ const service = createDataIoService({
   mapRecordToDataRecord: mapTaskToDataRecord,
   normalizeWriteError: (error) => normalizeReferenceWriteError(error, 'Task')
 });
-
-service.mapRecordToDataRecord = mapTaskToDataRecord;
-
-module.exports = service;

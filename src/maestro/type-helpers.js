@@ -33,8 +33,11 @@ function crudDecorator(readableOnly) {
 }
 
 function createPropertyDeclaration(field) {
+  const referencedType = field.relationshipType || field.objectType;
   const property = {
-    $class: field.objectType ? mm('ObjectProperty') : (PROPERTY_CLASS_MAP[field.type] || PROPERTY_CLASS_MAP.String),
+    $class: field.relationshipType
+      ? mm('RelationshipProperty')
+      : (field.objectType ? mm('ObjectProperty') : (PROPERTY_CLASS_MAP[field.type] || PROPERTY_CLASS_MAP.String)),
     name: field.name,
     isArray: !!field.isArray,
     isOptional: !!field.optional,
@@ -44,10 +47,10 @@ function createPropertyDeclaration(field) {
     ]
   };
 
-  if (field.objectType) {
+  if (referencedType) {
     property.type = {
       $class: mm('TypeIdentifier'),
-      name: field.objectType
+      name: referencedType
     };
   }
 

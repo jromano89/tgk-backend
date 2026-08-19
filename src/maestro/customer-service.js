@@ -1,8 +1,6 @@
 const { createResourceClient } = require('./resource-client');
 const { createDataIoService } = require('./dataio-service');
 const { TYPE_ALIASES, TYPE_NAME } = require('./customer-type-definitions');
-const taskService = require('./task-service');
-const transactionService = require('./transaction-service');
 const { isAttributeSelected } = require('./query-utils');
 const {
   asObject,
@@ -89,12 +87,8 @@ function mapCustomerToDataRecord(customer) {
     Organization: customer.organization || '',
     Status: customer.status || '',
     DataJson: serializeData(data),
-    Tasks: Array.isArray(customer.tasks)
-      ? customer.tasks.map(taskService.mapRecordToDataRecord)
-      : [],
-    Transactions: Array.isArray(customer.transactions)
-      ? customer.transactions.map(transactionService.mapRecordToDataRecord)
-      : [],
+    Tasks: Array.isArray(customer.tasks) ? customer.tasks.map((task) => task.id) : [],
+    Transactions: Array.isArray(customer.transactions) ? customer.transactions.map((transaction) => transaction.id) : [],
     CreatedAt: readRecordValue(customer, 'createdAt', 'created_at') || '',
     UpdatedAt: readRecordValue(customer, 'updatedAt', 'updated_at') || ''
   };

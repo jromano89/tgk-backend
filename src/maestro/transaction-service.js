@@ -67,7 +67,7 @@ function buildTransactionSearchFilters(query) {
   return Object.fromEntries(Object.entries(filters).filter(([, value]) => value !== null && value !== undefined && value !== ''));
 }
 
-const service = createDataIoService({
+module.exports = createDataIoService({
   typeName: TYPE_NAME,
   typeAliases: TYPE_ALIASES,
   createBackendRecord: client.create,
@@ -81,7 +81,3 @@ const service = createDataIoService({
   mapRecordToDataRecord: mapTransactionToDataRecord,
   normalizeWriteError: (error) => normalizeReferenceWriteError(error, 'Transaction')
 });
-
-service.mapRecordToDataRecord = mapTransactionToDataRecord;
-
-module.exports = service;
