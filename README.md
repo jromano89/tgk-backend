@@ -6,8 +6,6 @@ This service owns Docusign auth helpers, API proxying, app-scoped demo data, Ser
 
 ## Local Development
 
-Use Node.js 22 (see `.node-version`).
-
 ```bash
 cp .env.example .env
 npm install

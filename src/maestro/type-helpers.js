@@ -45,7 +45,10 @@ function createPropertyDeclaration(field) {
   };
 
   if (field.objectType) {
-    property.type = field.objectType;
+    property.type = {
+      $class: mm('TypeIdentifier'),
+      name: field.objectType
+    };
   }
 
   return property;
